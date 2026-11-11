@@ -51,6 +51,8 @@ xyz run examples/hello.xyz
 xyz install greetings
 ```
 
+Если раньше был установлен FableScript, повторный запуск установщика удалит старую команду `fable`. Проекты нужно переименовать с `.fable` на `.xyz`, а `fable.json`, `fable.lock.json` и `fable_modules` — в `xyz.json`, `xyz.lock.json` и `xyz_modules`.
+
 Новый проект можно создать и запустить без явного пути к файлу:
 
 ```text

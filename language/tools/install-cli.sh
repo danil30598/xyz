@@ -44,6 +44,7 @@ export ELECTRON_RUN_AS_NODE=1
 exec "$VSCODE_NODE" "$RUNTIME_TARGET/cli.js" "\$@"
 EOF
 chmod 755 "$BIN_TARGET/xyz"
+rm -f "$BIN_TARGET/fable"
 
 PROFILE="$HOME/.zprofile"
 PATH_LINE='export PATH="$HOME/.local/bin:$PATH"'

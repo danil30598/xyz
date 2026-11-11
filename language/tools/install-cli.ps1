@@ -4,6 +4,7 @@ $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $installRoot = Join-Path $env:LOCALAPPDATA 'xyz'
 $runtimeTarget = Join-Path $installRoot 'runtime'
 $binTarget = Join-Path $installRoot 'bin'
+$legacyBinTarget = Join-Path $env:LOCALAPPDATA 'FableScript\bin'
 
 function Remove-LegacyVendor([string]$RuntimeDirectory) {
     $runtimeFullPath = [System.IO.Path]::GetFullPath($RuntimeDirectory).TrimEnd([System.IO.Path]::DirectorySeparatorChar)
@@ -49,6 +50,10 @@ Set-Content -LiteralPath $launcherPath -Value $primaryLauncher -Encoding Ascii
 
 $windowsApps = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps'
 if (Test-Path -LiteralPath $windowsApps) {
+    $legacyLauncher = Join-Path $windowsApps 'fable.cmd'
+    if (Test-Path -LiteralPath $legacyLauncher) {
+        Remove-Item -LiteralPath $legacyLauncher -Force
+    }
     $windowsRuntime = Join-Path $windowsApps 'xyzRuntime'
     New-Item -ItemType Directory -Path $windowsRuntime -Force | Out-Null
     Remove-LegacyVendor $windowsRuntime
@@ -70,7 +75,7 @@ set "ELECTRON_RUN_AS_NODE=1"
 }
 
 $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
-$entries = @($userPath -split ';' | Where-Object { $_ })
+$entries = @($userPath -split ';' | Where-Object { $_ -and $_.TrimEnd('\') -ine $legacyBinTarget.TrimEnd('\') })
 if (-not ($entries | Where-Object { $_.TrimEnd('\') -ieq $binTarget.TrimEnd('\') })) {
     $newPath = (@($entries) + $binTarget) -join ';'
     [Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
