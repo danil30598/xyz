@@ -8,7 +8,7 @@ const { run } = require('../runtime/engine');
 const { createModuleLoader } = require('../runtime/module-loader');
 const { createFileModule } = require('../runtime/native-modules/file');
 
-const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'fablescript-file-'));
+const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'xyz-file-'));
 try {
   const files = createFileModule({ baseDirectory: directory });
   assert.equal(files.exists('notes/message.txt'), false);
@@ -34,15 +34,15 @@ try {
   fs.writeFileSync(path.join(directory, 'tampered.json'), tampered, 'utf8');
   assert.throws(() => files.read('tampered.json', 'rans#m', 'strong-password'), /файл повреждён/);
 
-  const entryPath = path.join(directory, 'main.fable');
+  const entryPath = path.join(directory, 'main.xyz');
   const output = [];
   run(`
     import file
     file.write("save.txt", "score=12")
     string saved = file.read("save.txt")
     bool present = file.exists("save.txt")
-    file.write("protected.json", "secret data", "rans#m", "fable-secret")
-    string protected = file.read("protected.json", "rans#m", "fable-secret")
+    file.write("protected.json", "secret data", "rans#m", "xyz-secret")
+    string protected = file.read("protected.json", "rans#m", "xyz-secret")
     print(saved)
     print(present)
     print(protected)

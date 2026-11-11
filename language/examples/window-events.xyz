@@ -5,7 +5,7 @@ var playerY = 220
 var obstacleX = 520
 var obstacleY = 190
 
-window.create(800, 520, "FableScript events")
+window.create(800, 520, "xyz events")
 window.show()
 
 while window.isOpen() {

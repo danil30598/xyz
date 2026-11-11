@@ -1,6 +1,6 @@
-# Реестр пакетов FableScript
+# Реестр пакетов xyz
 
-`index.json` — публичный реестр первой версии. GitHub раздаёт его и файлы `.fable` как статические файлы через `raw.githubusercontent.com`.
+`index.json` — публичный реестр первой версии. GitHub раздаёт его и файлы `.xyz` как статические файлы через `raw.githubusercontent.com`.
 
 Обычная версия пакета содержит URL исходного файла и обязательную контрольную сумму SHA-256. Нативный пакет содержит отдельные архивы для поддерживаемых платформ. Установщик проверяет сумму до распаковки, а пути внутри ZIP — перед записью.
 
@@ -9,12 +9,12 @@
 ```json
 {
   "name": "my_project",
-  "registry": "https://raw.githubusercontent.com/danil30598/fablescript-registry/main/frameworks/index.json"
+  "registry": "https://raw.githubusercontent.com/danil30598/xyz/main/frameworks/index.json"
 }
 ```
 
 Установка выполняется командой:
 
 ```text
-fable install greetings
+xyz install greetings
 ```

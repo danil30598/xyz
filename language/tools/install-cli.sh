@@ -3,7 +3,7 @@ set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 PROJECT_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
-INSTALL_ROOT="$HOME/Library/Application Support/FableScript"
+INSTALL_ROOT="$HOME/Library/Application Support/xyz"
 RUNTIME_TARGET="$INSTALL_ROOT/runtime"
 BIN_TARGET="$HOME/.local/bin"
 
@@ -38,12 +38,12 @@ cp "$PROJECT_ROOT/runtime/console-input.js" "$RUNTIME_TARGET/console-input.js"
 cp -R "$PROJECT_ROOT/runtime/native-modules" "$RUNTIME_TARGET/native-modules"
 rm -f "$RUNTIME_TARGET/native-modules/window-host.py"
 
-cat > "$BIN_TARGET/fable" <<EOF
+cat > "$BIN_TARGET/xyz" <<EOF
 #!/bin/sh
 export ELECTRON_RUN_AS_NODE=1
 exec "$VSCODE_NODE" "$RUNTIME_TARGET/cli.js" "\$@"
 EOF
-chmod 755 "$BIN_TARGET/fable"
+chmod 755 "$BIN_TARGET/xyz"
 
 PROFILE="$HOME/.zprofile"
 PATH_LINE='export PATH="$HOME/.local/bin:$PATH"'
@@ -52,5 +52,5 @@ if ! grep -Fqx "$PATH_LINE" "$PROFILE"; then
   printf '\n%s\n' "$PATH_LINE" >> "$PROFILE"
 fi
 
-echo "FableScript CLI установлен: $BIN_TARGET/fable"
-echo "Откройте новое окно Terminal и выполните: fable install window"
+echo "xyz CLI установлен: $BIN_TARGET/xyz"
+echo "Откройте новое окно Terminal и выполните: xyz install window"

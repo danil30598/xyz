@@ -4,12 +4,12 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const { createWindowModule, findPythonw } = require('../runtime/native-modules/window');
 
-const nativeModulesDirectory = path.join('C:', 'FableScript', 'runtime', 'native-modules');
-const bundledPython = path.join('C:', 'Project', 'fable_modules', '.native', 'window', 'python-win-x64', 'pythonw.exe');
+const nativeModulesDirectory = path.join('C:', 'xyz', 'runtime', 'native-modules');
+const bundledPython = path.join('C:', 'Project', 'xyz_modules', '.native', 'window', 'python-win-x64', 'pythonw.exe');
 assert.equal(findPythonw({
   nativeModulesDirectory,
   pythonExecutable: bundledPython,
-  environment: { FABLE_PYTHONW: path.join('C:', 'Other', 'pythonw.exe') },
+  environment: { XYZ_PYTHONW: path.join('C:', 'Other', 'pythonw.exe') },
   exists(candidate) { return candidate === bundledPython; },
 }), bundledPython);
 
@@ -47,7 +47,7 @@ graphics.background('#123456');
 graphics.rect(10, 20, 100, 50, 'red');
 graphics.circle(200, 150, 25, 'yellow');
 graphics.line(0, 0, 50, 50, 'white', 3);
-graphics.text('FableScript', 30, 300, 24, 'white');
+graphics.text('xyz', 30, 300, 24, 'white');
 graphics.image('player.png', 300, 200, 64, 64);
 graphics.sprite('player.png', 400, 200, 64, 64, 45);
 graphics.playSound('jump.wav', 0.5);
@@ -55,14 +55,14 @@ graphics.playMusic('music.ogg', true, 0.25);
 assert.equal(graphics.show(), true);
 
 assert.equal(openedPath, writtenPath);
-assert.match(writtenPath, /fablescript-window-[a-f0-9-]+\.json$/);
+assert.match(writtenPath, /xyz-window-[a-f0-9-]+\.json$/);
 const scene = JSON.parse(writtenScene);
 assert.equal(scene.width, 640);
 assert.equal(scene.height, 480);
 assert.equal(scene.title, 'Game title');
 assert.equal(scene.background, '#123456');
 assert.equal(scene.items[1].kind, 'circle');
-assert.equal(scene.items[3].value, 'FableScript');
+assert.equal(scene.items[3].value, 'xyz');
 assert.equal(scene.items[4].kind, 'image');
 assert.equal(scene.items[4].path, 'C:\\Project\\player.png');
 assert.equal(scene.items[5].kind, 'sprite');
@@ -113,6 +113,6 @@ const macGraphics = createWindowModule({
 });
 macGraphics.create(320, 200, 'Apple Silicon');
 macGraphics.show();
-assert.match(macNativePath, /fablescript-window-[a-f0-9-]+\.json$/);
+assert.match(macNativePath, /xyz-window-[a-f0-9-]+\.json$/);
 
 console.log('window module tests passed');

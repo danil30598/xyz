@@ -1,21 +1,21 @@
-# Справочник языка FableScript
+# Справочник языка xyz
 
-Этот файл описывает основное ядро FableScript. API отдельных модулей здесь намеренно нет: встроенные и устанавливаемые пакеты описываются в README и каталоге `frameworks`.
+Этот файл описывает основное ядро xyz. API отдельных модулей здесь намеренно нет: встроенные и устанавливаемые пакеты описываются в README и каталоге `frameworks`.
 
 ## Файлы и комментарии
 
-Исходные файлы имеют расширение `.fable`. Точка с запятой в конце строки необязательна. Однострочный комментарий начинается с `//`.
+Исходные файлы имеют расширение `.xyz`. Точка с запятой в конце строки необязательна. Однострочный комментарий начинается с `//`.
 
-```fable
+```xyz
 // Первая программа
-print("Привет, FableScript!")
+print("Привет, xyz!")
 ```
 
 ## Значения и переменные
 
 Основные типы: `int`, `float`, `string`, `bool`, `list<T>`, таблица и `any`. Значение `null` означает отсутствие значения.
 
-```fable
+```xyz
 var name = "Alex"       // тип определяется автоматически
 int age = 18
 float speed = 4.5
@@ -27,7 +27,7 @@ list<int> scores = [10, 20, 30]
 
 Список, объявленный через `var`, может содержать значения разных типов:
 
-```fable
+```xyz
 var mixed = [1, "два", true, null]
 ```
 
@@ -39,7 +39,7 @@ var mixed = [1, "два", true, null]
 
 Сравнения: `==`, `!=`, `<`, `>`, `<=`, `>=`. Логические операторы записываются словами: `and`, `or`, `not`.
 
-```fable
+```xyz
 var score = 10
 score += 5
 
@@ -54,8 +54,8 @@ if score >= 10 and not false {
 
 Строки записываются в двойных или одинарных кавычках. Поддерживаются escape-последовательности `\n`, `\r`, `\t`, `\\`, `\"` и `\'`.
 
-```fable
-var text = "Fable Script"
+```xyz
+var text = "Xyz Script"
 print(text.len)
 print(text.upper())
 print(text.lower())
@@ -74,7 +74,7 @@ print(text.split(" "))
 
 Индекс начинается с нуля. Чтение элемента выполняется через квадратные скобки.
 
-```fable
+```xyz
 var values = [10, "текст", true]
 print(values[0])
 print(values.len)
@@ -97,7 +97,7 @@ values.clear()
 
 Таблица хранит пары `ключ: значение`. К полю обращаются через точку.
 
-```fable
+```xyz
 var player = {name: "Alex", score: 10}
 player.score += 5
 print(player.name)
@@ -116,7 +116,7 @@ print(player.contains("score"))
 
 ## Условия
 
-```fable
+```xyz
 if age < 13 {
     print("child")
 } else if age < 18 {
@@ -128,7 +128,7 @@ if age < 13 {
 
 ## Циклы
 
-```fable
+```xyz
 repeat 3 times {
     print("ещё раз")
 }
@@ -154,7 +154,7 @@ for value in [10, 20, 30] {
 
 У каждого параметра обычной функции сейчас обязательно указываются тип и имя. Тип результата после `->` необязателен и может быть `int`, `float`, `string` или `bool`.
 
-```fable
+```xyz
 func add(int a, int b) -> int
 {
     return a + b
@@ -169,7 +169,7 @@ print(add(2, 3))
 
 Поля класса объявляются через `var`. Конструктор называется `__init`, текущий объект доступен через `self`. Типы параметров конструктора можно не указывать.
 
-```fable
+```xyz
 class Person
 {
     var name
@@ -195,7 +195,7 @@ person.greet()
 
 ## Ввод, вывод и преобразования
 
-```fable
+```xyz
 var name = input("Имя: ")
 int age = int(input("Возраст: "))
 float price = float("12.5")
@@ -208,7 +208,7 @@ print(message)
 
 ## Обработка ошибок
 
-```fable
+```xyz
 try {
     int("не число")
 } catch error {
@@ -220,11 +220,11 @@ try {
 
 ## Запуск другого файла
 
-`execute()` запускает другой `.fable` рядом с текущей программой. Вторым аргументом можно указать имя экспортируемой функции, третьим — список её аргументов.
+`execute()` запускает другой `.xyz` рядом с текущей программой. Вторым аргументом можно указать имя экспортируемой функции, третьим — список её аргументов.
 
-```fable
-execute("IdChecker.fable")
-var result = execute("IdChecker.fable", "check", ["ABC-123"])
+```xyz
+execute("IdChecker.xyz")
+var result = execute("IdChecker.xyz", "check", ["ABC-123"])
 ```
 
 Имена, начинающиеся с `_`, считаются внутренними и недоступны через другой файл или модуль.
@@ -232,15 +232,15 @@ var result = execute("IdChecker.fable", "check", ["ABC-123"])
 ## Запуск проекта
 
 ```text
-fable new MyGame
+xyz new MyGame
 cd MyGame
-fable run
+xyz run
 ```
 
-`fable new` создаёт `main.fable`, `fable.json` и папку `fable_modules`. Команда `fable run` без пути читает поле `entry` из `fable.json`; по умолчанию используется `main.fable`.
+`xyz new` создаёт `main.xyz`, `xyz.json` и папку `xyz_modules`. Команда `xyz run` без пути читает поле `entry` из `xyz.json`; по умолчанию используется `main.xyz`.
 
 Для одиночного файла путь можно передать явно:
 
 ```text
-fable run examples/hello.fable
+xyz run examples/hello.xyz
 ```

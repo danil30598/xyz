@@ -20,7 +20,7 @@ assert.throws(() => math.sqrt(-1), /отрицательного/);
 assert.throws(() => math.abs('4'), /числом/);
 
 const output = [];
-const entryPath = path.join(__dirname, 'math-example.fable');
+const entryPath = path.join(__dirname, 'math-example.xyz');
 run(`
   import math
   float pi = math.PI

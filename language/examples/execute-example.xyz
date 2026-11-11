@@ -1,4 +1,4 @@
-var valid = execute("id-checker.fable", "check", ["FS-42"])
+var valid = execute("id-checker.xyz", "check", ["FS-42"])
 
 if valid {
     print("ID принят")

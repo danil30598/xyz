@@ -40,7 +40,7 @@ test('ignores calls inside comments and returns the surrounding call', () => {
   assert.equal(findActiveCall(source).activeParameter, 1);
 });
 
-test('tracks arguments separated by spaces as allowed by FableScript', () => {
+test('tracks arguments separated by spaces as allowed by xyz', () => {
   assert.equal(findActiveCall('sum(2 ').activeParameter, 0);
   assert.equal(findActiveCall('sum(2 3').activeParameter, 1);
   assert.equal(findActiveCall('sum(number - 1 other').activeParameter, 1);
@@ -58,7 +58,7 @@ test('formats required and optional signatures', () => {
   ]);
 });
 
-test('understands typed and untyped FableScript parameters', () => {
+test('understands typed and untyped xyz parameters', () => {
   assert.deepEqual(splitDeclarationParameters('int a, b string title'), [
     { type: 'int', name: 'a' },
     { type: 'any', name: 'b' },

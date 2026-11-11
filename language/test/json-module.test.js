@@ -14,7 +14,7 @@ assert.throws(() => json.parse('{broken'), /Некорректный JSON/);
 assert.throws(() => json.parse(12), /ожидает строку/);
 
 const output = [];
-const entryPath = path.join(__dirname, 'json-example.fable');
+const entryPath = path.join(__dirname, 'json-example.xyz');
 run(`
   import json
   var source = {name: "Alex", scores: [7, 9]}

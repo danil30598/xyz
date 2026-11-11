@@ -8,7 +8,7 @@ var enemyY = -80.0
 var score = 0
 var gameOver = false
 
-window.create(800, 520, "FableScript: Dodge")
+window.create(800, 520, "xyz: Dodge")
 window.show()
 
 while window.isOpen() {

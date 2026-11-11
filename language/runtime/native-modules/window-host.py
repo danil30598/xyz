@@ -7,7 +7,7 @@ import time
 
 def show_error(message):
     try:
-        ctypes.windll.user32.MessageBoxW(0, str(message), "FableScript window", 0x10)
+        ctypes.windll.user32.MessageBoxW(0, str(message), "xyz window", 0x10)
     except Exception:
         pass
 
@@ -19,7 +19,7 @@ def read_scene(file_path):
                 return json.load(source)
         except (OSError, json.JSONDecodeError):
             time.sleep(0.002)
-    raise RuntimeError("Не удалось прочитать новый кадр FableScript")
+    raise RuntimeError("Не удалось прочитать новый кадр xyz")
 
 
 def write_state(file_path, state):
@@ -51,7 +51,7 @@ def main(scene_path):
         pygame.init()
         pygame.font.init()
         screen = pygame.display.set_mode((int(scene["width"]), int(scene["height"])))
-        pygame.display.set_caption(str(scene.get("title", "FableScript")))
+        pygame.display.set_caption(str(scene.get("title", "xyz")))
         clock = pygame.time.Clock()
         fonts = {}
         images = {}
@@ -165,7 +165,7 @@ def main(scene_path):
                 running = False
                 break
 
-            pygame.display.set_caption(str(scene.get("title", "FableScript")))
+            pygame.display.set_caption(str(scene.get("title", "xyz")))
             process_commands()
             screen.fill(color(pygame, scene.get("background", "black")))
             for item in scene.get("items", []):

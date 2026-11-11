@@ -9,7 +9,7 @@ const developmentRuntime = path.resolve(__dirname, '..', 'runtime');
 const runtimePath = fs.existsSync(path.join(packagedRuntime, 'engine.js'))
   ? packagedRuntime
   : developmentRuntime;
-const { FableError, parse, run, validate } = require(path.join(runtimePath, 'engine.js'));
+const { XyzError, parse, run, validate } = require(path.join(runtimePath, 'engine.js'));
 const { buildPortable } = require(path.join(runtimePath, 'builder.js'));
 const { builtinModules, createModuleLoader, findProjectDir, globalModulesDir } = require(path.join(runtimePath, 'module-loader.js'));
 const { installPackage } = require(path.join(runtimePath, 'package-manager.js'));
@@ -35,9 +35,9 @@ const GLOBAL_SIGNATURES = {
     ...signatureModels('range', { parameters: ['start', 'end', 'step'], detail: 'Целые числа с указанным шагом' }),
   ],
   execute: [
-    ...signatureModels('execute', { parameters: ['file'], detail: 'Запустить файл FableScript' }),
-    ...signatureModels('execute', { parameters: ['file', 'function'], detail: 'Запустить функцию из файла FableScript' }),
-    ...signatureModels('execute', { parameters: ['file', 'function', 'arguments'], detail: 'Запустить функцию с аргументами из файла FableScript' }),
+    ...signatureModels('execute', { parameters: ['file'], detail: 'Запустить файл xyz' }),
+    ...signatureModels('execute', { parameters: ['file', 'function'], detail: 'Запустить функцию из файла xyz' }),
+    ...signatureModels('execute', { parameters: ['file', 'function', 'arguments'], detail: 'Запустить функцию с аргументами из файла xyz' }),
   ],
 };
 
@@ -86,19 +86,19 @@ function collectionSignatures(receiver, name) {
 function discoverModules(filePath) {
   const projectDir = findProjectDir(filePath);
   const directories = [
-    { path: path.dirname(filePath), detail: 'Локальный модуль FableScript' },
-    { path: path.join(projectDir, 'fable_modules'), detail: 'Пакет проекта FableScript' },
-    { path: globalModulesDir(), detail: 'Глобальный пакет FableScript' },
+    { path: path.dirname(filePath), detail: 'Локальный модуль xyz' },
+    { path: path.join(projectDir, 'xyz_modules'), detail: 'Пакет проекта xyz' },
+    { path: globalModulesDir(), detail: 'Глобальный пакет xyz' },
   ];
   const modules = new Map();
   for (const module of builtinModules()) modules.set(module.name, { ...module, path: null });
   for (const directory of directories) {
     if (!fs.existsSync(directory.path)) continue;
     for (const entry of fs.readdirSync(directory.path, { withFileTypes: true })) {
-      if (!entry.isFile() || path.extname(entry.name) !== '.fable') continue;
+      if (!entry.isFile() || path.extname(entry.name) !== '.xyz') continue;
       const modulePath = path.join(directory.path, entry.name);
       if (path.resolve(modulePath) === path.resolve(filePath)) continue;
-      const name = path.basename(entry.name, '.fable');
+      const name = path.basename(entry.name, '.xyz');
       if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(name) && !modules.has(name)) {
         modules.set(name, { name, path: modulePath, detail: directory.detail });
       }
@@ -162,20 +162,20 @@ function vscodeSignatureHelp(models, activeParameter) {
 }
 
 function activate(context) {
-  const diagnostics = vscode.languages.createDiagnosticCollection('fablescript');
+  const diagnostics = vscode.languages.createDiagnosticCollection('xyz');
   context.subscriptions.push(diagnostics);
 
-  const output = vscode.window.createOutputChannel('FableScript');
+  const output = vscode.window.createOutputChannel('xyz');
   context.subscriptions.push(output);
 
   const runButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  runButton.text = '$(play) Run FableScript';
-  runButton.tooltip = 'Запустить текущий файл FableScript (F6)';
-  runButton.command = 'fablescript.runFile';
+  runButton.text = '$(play) Run xyz';
+  runButton.tooltip = 'Запустить текущий файл xyz (F6)';
+  runButton.command = 'xyz.runFile';
   context.subscriptions.push(runButton);
 
   const updateRunButton = () => {
-    if (vscode.window.activeTextEditor?.document.languageId === 'fablescript') {
+    if (vscode.window.activeTextEditor?.document.languageId === 'xyz') {
       runButton.show();
     } else {
       runButton.hide();
@@ -183,7 +183,7 @@ function activate(context) {
   };
 
   const updateDiagnostics = (document) => {
-    if (document.languageId !== 'fablescript') return;
+    if (document.languageId !== 'xyz') return;
     const problems = validate(document.getText()).map((problem) => {
       const line = Math.max(0, problem.line - 1);
       const column = Math.max(0, problem.column - 1);
@@ -193,7 +193,7 @@ function activate(context) {
         problem.message,
         vscode.DiagnosticSeverity.Error,
       );
-      diagnostic.source = 'FableScript';
+      diagnostic.source = 'xyz';
       return diagnostic;
     });
     diagnostics.set(document.uri, problems);
@@ -209,10 +209,10 @@ function activate(context) {
   for (const document of vscode.workspace.textDocuments) updateDiagnostics(document);
   updateRunButton();
 
-  context.subscriptions.push(vscode.commands.registerCommand('fablescript.runFile', async () => {
+  context.subscriptions.push(vscode.commands.registerCommand('xyz.runFile', async () => {
     const editor = vscode.window.activeTextEditor;
-    if (!editor || editor.document.languageId !== 'fablescript') {
-      void vscode.window.showErrorMessage('Откройте файл FableScript с расширением .fable.');
+    if (!editor || editor.document.languageId !== 'xyz') {
+      void vscode.window.showErrorMessage('Откройте файл xyz с расширением .xyz.');
       return;
     }
 
@@ -229,7 +229,7 @@ function activate(context) {
       const filePath = editor.document.uri.fsPath;
       if (/\binput\s*\(/.test(editor.document.getText())) {
         const terminal = vscode.window.createTerminal({
-          name: `FableScript: ${path.basename(filePath)}`,
+          name: `xyz: ${path.basename(filePath)}`,
           shellPath: process.execPath,
           shellArgs: [path.join(runtimePath, 'cli.js'), 'run', filePath],
           env: { ELECTRON_RUN_AS_NODE: '1' },
@@ -244,9 +244,9 @@ function activate(context) {
       output.appendLine('');
       output.appendLine('Программа завершена.');
     } catch (error) {
-      if (error instanceof FableError) {
+      if (error instanceof XyzError) {
         output.appendLine(`${error.filePath || editor.document.uri.fsPath}:${error.line}:${error.column}: ${error.message}`);
-        void vscode.window.showErrorMessage(`FableScript: ${error.message}`);
+        void vscode.window.showErrorMessage(`xyz: ${error.message}`);
       } else {
         throw error;
       }
@@ -254,9 +254,9 @@ function activate(context) {
     output.show(true);
   }));
 
-  context.subscriptions.push(vscode.commands.registerCommand('fablescript.installPackage', async () => {
+  context.subscriptions.push(vscode.commands.registerCommand('xyz.installPackage', async () => {
     const packageName = await vscode.window.showInputBox({
-      title: 'Установить пакет FableScript',
+      title: 'Установить пакет xyz',
       prompt: 'Имя пакета или имя@версия',
       placeHolder: 'example или example@1.0.0',
       validateInput: (value) => /^[A-Za-z_][A-Za-z0-9_]*(?:@[^@\s]+)?$/.test(value) ? null : 'Используйте латинские буквы, цифры и _.',
@@ -267,53 +267,53 @@ function activate(context) {
     const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     const projectDir = editorPath ? findProjectDir(editorPath) : workspacePath;
     if (!projectDir) {
-      void vscode.window.showErrorMessage('Сначала откройте папку проекта FableScript.');
+      void vscode.window.showErrorMessage('Сначала откройте папку проекта xyz.');
       return;
     }
-    const registryUrl = vscode.workspace.getConfiguration('fablescript').get('registryUrl') || undefined;
+    const registryUrl = vscode.workspace.getConfiguration('xyz').get('registryUrl') || undefined;
     try {
       const result = await installPackage(packageName, { projectDir, registryUrl });
       void vscode.window.showInformationMessage(`Установлен ${result.name}@${result.version}.`);
     } catch (error) {
-      void vscode.window.showErrorMessage(`FableScript: ${error.message}`);
+      void vscode.window.showErrorMessage(`xyz: ${error.message}`);
     }
   }));
 
-  context.subscriptions.push(vscode.commands.registerCommand('fablescript.buildFile', async () => {
+  context.subscriptions.push(vscode.commands.registerCommand('xyz.buildFile', async () => {
     const editor = vscode.window.activeTextEditor;
-    if (!editor || editor.document.languageId !== 'fablescript' || editor.document.isUntitled) {
-      void vscode.window.showErrorMessage('Откройте сохранённый файл FableScript для сборки.');
+    if (!editor || editor.document.languageId !== 'xyz' || editor.document.isUntitled) {
+      void vscode.window.showErrorMessage('Откройте сохранённый файл xyz для сборки.');
       return;
     }
     if (editor.document.isDirty) await editor.document.save();
     try {
       const result = await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: 'Сборка FableScript .exe',
+        title: 'Сборка xyz .exe',
         cancellable: false,
       }, async () => buildPortable(editor.document.uri.fsPath));
       const action = await vscode.window.showInformationMessage(`Собрано: ${result.launcherPath}`, 'Открыть папку');
       if (action === 'Открыть папку') await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(result.launcherPath));
     } catch (error) {
-      void vscode.window.showErrorMessage(`FableScript: ${error.message}`);
+      void vscode.window.showErrorMessage(`xyz: ${error.message}`);
     }
   }));
 
   context.subscriptions.push(vscode.languages.registerCodeLensProvider(
-    { language: 'fablescript', scheme: 'file' },
+    { language: 'xyz', scheme: 'file' },
     {
       provideCodeLenses(document) {
         if (document.lineCount === 0) return [];
         return [new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), {
-          command: 'fablescript.runFile',
-          title: '$(play) Запустить FableScript (F6)',
+          command: 'xyz.runFile',
+          title: '$(play) Запустить xyz (F6)',
         })];
       },
     },
   ));
 
   context.subscriptions.push(vscode.languages.registerCompletionItemProvider(
-    { language: 'fablescript', scheme: 'file' },
+    { language: 'xyz', scheme: 'file' },
     {
       provideCompletionItems(document, position) {
         const snippet = (label, body, detail) => {
@@ -331,7 +331,7 @@ function activate(context) {
           return modules.map((module) => {
             const item = new vscode.CompletionItem(module.name, vscode.CompletionItemKind.Module);
             item.detail = module.detail;
-            item.documentation = `Подключить ${module.name}.fable`;
+            item.documentation = `Подключить ${module.name}.xyz`;
             item.sortText = `0-${module.name}`;
             return item;
           });
@@ -393,7 +393,7 @@ function activate(context) {
           snippet('repeat', 'repeat ${1:count} times {\n\t${0}\n}', 'Повторить блок заданное число раз'),
           snippet('for', 'for ${1:item} in ${2:collection} {\n\t${0}\n}', 'Перебрать список или ключи таблицы'),
           snippet('range', 'range(${1:start}, ${2:end}, ${3:step})', 'Создать диапазон целых чисел'),
-          snippet('execute', 'execute(${1:"script.fable"}, ${2:"function"}, [${3:arguments}])', 'Запустить другой файл FableScript'),
+          snippet('execute', 'execute(${1:"script.xyz"}, ${2:"function"}, [${3:arguments}])', 'Запустить другой файл xyz'),
           snippet('break', 'break', 'Завершить текущий цикл'),
           snippet('continue', 'continue', 'Перейти к следующей итерации цикла'),
           snippet('func', 'func ${1:name}(${2:int value})\n{\n\t${0}\n}', 'Объявить функцию'),
@@ -412,7 +412,7 @@ function activate(context) {
 
         for (const keyword of ['int', 'float', 'string', 'bool', 'any', 'self', 'true', 'false', 'null', 'and', 'or', 'not', 'in', 'times', 'break', 'continue', 'try', 'catch']) {
           const item = new vscode.CompletionItem(keyword, vscode.CompletionItemKind.Keyword);
-          item.detail = 'Ключевое слово FableScript';
+          item.detail = 'Ключевое слово xyz';
           item.sortText = `1-${keyword}`;
           suggestions.push(item);
         }
@@ -423,7 +423,7 @@ function activate(context) {
         while ((match = declaration.exec(document.getText())) !== null) declaredNames.add(match[1]);
         for (const name of declaredNames) {
           const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Variable);
-          item.detail = 'Переменная FableScript';
+          item.detail = 'Переменная xyz';
           item.sortText = `2-${name}`;
           suggestions.push(item);
         }
@@ -432,7 +432,7 @@ function activate(context) {
         while ((match = functionDeclaration.exec(document.getText())) !== null) declaredFunctions.add(match[1]);
         for (const name of declaredFunctions) {
           const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Function);
-          item.detail = 'Функция FableScript';
+          item.detail = 'Функция xyz';
           const member = findSourceCallable(document.getText(), name);
           const parameters = callableParameters(member).map(parameterName);
           const placeholders = parameters.map((parameter, index) => `\${${index + 1}:${parameter}}`).join(', ');
@@ -445,7 +445,7 @@ function activate(context) {
         while ((match = classDeclaration.exec(document.getText())) !== null) declaredClasses.add(match[1]);
         for (const name of declaredClasses) {
           const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Class);
-          item.detail = 'Класс FableScript';
+          item.detail = 'Класс xyz';
           const member = findSourceCallable(document.getText(), name);
           const parameters = callableParameters(member).map(parameterName);
           const placeholders = parameters.map((parameter, index) => `\${${index + 1}:${parameter}}`).join(', ');
@@ -460,7 +460,7 @@ function activate(context) {
   ));
 
   context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(
-    { language: 'fablescript', scheme: 'file' },
+    { language: 'xyz', scheme: 'file' },
     {
       provideSignatureHelp(document, position) {
         const offset = document.offsetAt(position);
@@ -473,7 +473,7 @@ function activate(context) {
   ));
 
   context.subscriptions.push(vscode.languages.registerHoverProvider(
-    { language: 'fablescript', scheme: 'file' },
+    { language: 'xyz', scheme: 'file' },
     {
       provideHover(document, position) {
         const range = document.getWordRangeAtPosition(position, /[A-Za-z_][A-Za-z0-9_]*/);
@@ -488,7 +488,7 @@ function activate(context) {
             const parameters = callableParameters(member).map(parameterName).join(', ');
             const signature = member.kind === 'function' ? `func ${receiver}.${name}(${parameters})` : `${member.kind} ${receiver}.${name}`;
             const markdown = new vscode.MarkdownString();
-            markdown.appendCodeblock(signature, 'fable');
+            markdown.appendCodeblock(signature, 'xyz');
             if (member.detail) markdown.appendMarkdown(`\n${member.detail}`);
             return new vscode.Hover(markdown, range);
           }
@@ -496,14 +496,14 @@ function activate(context) {
         const information = hoverText(document.getText(), name, document.offsetAt(position));
         if (!information) return null;
         const markdown = new vscode.MarkdownString();
-        markdown.appendCodeblock(information, 'fable');
+        markdown.appendCodeblock(information, 'xyz');
         return new vscode.Hover(markdown, range);
       },
     },
   ));
 
   context.subscriptions.push(vscode.languages.registerDefinitionProvider(
-    { language: 'fablescript', scheme: 'file' },
+    { language: 'xyz', scheme: 'file' },
     {
       provideDefinition(document, position) {
         const range = document.getWordRangeAtPosition(position, /[A-Za-z_][A-Za-z0-9_]*/);
@@ -527,7 +527,7 @@ function activate(context) {
   ));
 
   context.subscriptions.push(vscode.languages.registerRenameProvider(
-    { language: 'fablescript', scheme: 'file' },
+    { language: 'xyz', scheme: 'file' },
     {
       prepareRename(document, position) {
         const range = document.getWordRangeAtPosition(position, /[A-Za-z_][A-Za-z0-9_]*/);
@@ -537,7 +537,7 @@ function activate(context) {
         return { range, placeholder: name };
       },
       provideRenameEdits(document, position, newName) {
-        if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(newName) || KEYWORDS.has(newName)) throw new Error('Новое имя должно быть допустимым идентификатором FableScript.');
+        if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(newName) || KEYWORDS.has(newName)) throw new Error('Новое имя должно быть допустимым идентификатором xyz.');
         const range = document.getWordRangeAtPosition(position, /[A-Za-z_][A-Za-z0-9_]*/);
         if (!range) return null;
         const oldName = document.getText(range);

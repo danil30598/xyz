@@ -12,10 +12,10 @@ const BUILTIN_FUNCTIONS = new Map([
   ['execute', 'any'],
 ]);
 
-class FableError extends Error {
+class XyzError extends Error {
   constructor(message, line, column) {
     super(message);
-    this.name = 'FableError';
+    this.name = 'XyzError';
     this.line = line;
     this.column = column;
   }
@@ -66,14 +66,14 @@ function tokenize(text, line, baseColumn) {
         if (text[i] === '\\') {
           const escape = text[i + 1];
           const escapes = { n: '\n', r: '\r', t: '\t', '\\': '\\', '"': '"', "'": "'" };
-          if (!(escape in escapes)) throw new FableError(`Неизвестная escape-последовательность \\${escape}.`, line, baseColumn + i);
+          if (!(escape in escapes)) throw new XyzError(`Неизвестная escape-последовательность \\${escape}.`, line, baseColumn + i);
           value += escapes[escape];
           i += 2;
         } else {
           value += text[i++];
         }
       }
-      if (!closed) throw new FableError('Строка не закрыта кавычкой.', line, baseColumn + start);
+      if (!closed) throw new XyzError('Строка не закрыта кавычкой.', line, baseColumn + start);
       push('literal', value, start, { valueType: 'string' });
       continue;
     }
@@ -94,7 +94,7 @@ function tokenize(text, line, baseColumn) {
       i += raw.length;
       continue;
     }
-    throw new FableError(`Неожиданный символ «${text[i]}» в выражении.`, line, baseColumn + i);
+    throw new XyzError(`Неожиданный символ «${text[i]}» в выражении.`, line, baseColumn + i);
   }
   return tokens;
 }
@@ -105,7 +105,7 @@ function parseExpression(text, line, column) {
   const current = () => tokens[position];
   function atom() {
     const token = current();
-    if (!token) throw new FableError('Ожидалось значение.', line, column + text.length);
+    if (!token) throw new XyzError('Ожидалось значение.', line, column + text.length);
     if (token.type === 'literal') { position += 1; return { kind: 'literal', ...token }; }
     if (token.type === 'identifier') {
       position += 1;
@@ -117,9 +117,9 @@ function parseExpression(text, line, column) {
       while (current() && current().type !== ']') {
         elements.push(logicalOr());
         if (current()?.type === ',') position += 1;
-        else if (current()?.type !== ']') throw new FableError('Элементы списка разделяются запятыми.', line, current()?.column ?? column + text.length);
+        else if (current()?.type !== ']') throw new XyzError('Элементы списка разделяются запятыми.', line, current()?.column ?? column + text.length);
       }
-      if (current()?.type !== ']') throw new FableError('Список не закрыт скобкой ].', line, column + text.length);
+      if (current()?.type !== ']') throw new XyzError('Список не закрыт скобкой ].', line, column + text.length);
       position += 1;
       return { kind: 'list', elements, line, column: token.column };
     }
@@ -129,29 +129,29 @@ function parseExpression(text, line, column) {
       const keys = new Set();
       while (current() && current().type !== '}') {
         const key = current();
-        if (key.type !== 'identifier' && !(key.type === 'literal' && key.valueType === 'string')) throw new FableError('Ключ таблицы должен быть именем или строкой.', line, key.column);
+        if (key.type !== 'identifier' && !(key.type === 'literal' && key.valueType === 'string')) throw new XyzError('Ключ таблицы должен быть именем или строкой.', line, key.column);
         position += 1;
-        if (keys.has(String(key.value))) throw new FableError(`Ключ «${key.value}» указан дважды.`, line, key.column);
-        if (['len', 'add', 'remove', 'insert', 'clear', 'contains', 'keys', 'values', 'upper', 'lower', 'replace', 'split'].includes(String(key.value))) throw new FableError(`Ключ «${key.value}» зарезервирован.`, line, key.column);
+        if (keys.has(String(key.value))) throw new XyzError(`Ключ «${key.value}» указан дважды.`, line, key.column);
+        if (['len', 'add', 'remove', 'insert', 'clear', 'contains', 'keys', 'values', 'upper', 'lower', 'replace', 'split'].includes(String(key.value))) throw new XyzError(`Ключ «${key.value}» зарезервирован.`, line, key.column);
         keys.add(String(key.value));
-        if (current()?.type !== ':') throw new FableError('После ключа таблицы ожидался символ :.', line, current()?.column ?? column + text.length);
+        if (current()?.type !== ':') throw new XyzError('После ключа таблицы ожидался символ :.', line, current()?.column ?? column + text.length);
         position += 1;
         entries.push({ key: String(key.value), value: logicalOr() });
         if (current()?.type === ',') position += 1;
-        else if (current()?.type !== '}') throw new FableError('Элементы таблицы разделяются запятыми.', line, current()?.column ?? column + text.length);
+        else if (current()?.type !== '}') throw new XyzError('Элементы таблицы разделяются запятыми.', line, current()?.column ?? column + text.length);
       }
-      if (current()?.type !== '}') throw new FableError('Таблица не закрыта скобкой }.', line, column + text.length);
+      if (current()?.type !== '}') throw new XyzError('Таблица не закрыта скобкой }.', line, column + text.length);
       position += 1;
       return { kind: 'table', entries, line, column: token.column };
     }
     if (token.type === '(') {
       position += 1;
       const value = logicalOr();
-      if (current()?.type !== ')') throw new FableError('Ожидалась закрывающая скобка.', line, current()?.column ?? column + text.length);
+      if (current()?.type !== ')') throw new XyzError('Ожидалась закрывающая скобка.', line, current()?.column ?? column + text.length);
       position += 1;
       return value;
     }
-    throw new FableError('Ожидалось значение или выражение в скобках.', line, token.column);
+    throw new XyzError('Ожидалось значение или выражение в скобках.', line, token.column);
   }
   function primary() {
     let expression = atom();
@@ -164,18 +164,18 @@ function parseExpression(text, line, column) {
           args.push(logicalOr());
           if (current()?.type === ',') position += 1;
         }
-        if (current()?.type !== ')') throw new FableError('Вызов не закрыт скобкой.', line, current()?.column ?? column + text.length);
+        if (current()?.type !== ')') throw new XyzError('Вызов не закрыт скобкой.', line, current()?.column ?? column + text.length);
         position += 1;
         if (expression.kind === 'identifier') expression = { kind: 'call', name: expression.name, args, line, column: expression.column };
         else if (expression.kind === 'member') expression = { kind: 'methodCall', object: expression.object, name: expression.name, args, line, column: callToken.column };
-        else throw new FableError('Это значение нельзя вызвать.', line, callToken.column);
+        else throw new XyzError('Это значение нельзя вызвать.', line, callToken.column);
         continue;
       }
       if (current()?.type === '[') {
         const bracket = current();
         position += 1;
         const index = logicalOr();
-        if (current()?.type !== ']') throw new FableError('Индекс не закрыт скобкой ].', line, current()?.column ?? column + text.length);
+        if (current()?.type !== ']') throw new XyzError('Индекс не закрыт скобкой ].', line, current()?.column ?? column + text.length);
         position += 1;
         expression = { kind: 'index', object: expression, index, line, column: bracket.column };
         continue;
@@ -184,7 +184,7 @@ function parseExpression(text, line, column) {
         const dot = current();
         position += 1;
         const name = current();
-        if (name?.type !== 'identifier') throw new FableError('После точки ожидалось имя свойства.', line, name?.column ?? dot.column + 1);
+        if (name?.type !== 'identifier') throw new XyzError('После точки ожидалось имя свойства.', line, name?.column ?? dot.column + 1);
         position += 1;
         expression = { kind: 'member', object: expression, name: name.value, line, column: dot.column };
         continue;
@@ -248,9 +248,9 @@ function parseExpression(text, line, column) {
     }
     return left;
   }
-  if (!tokens.length) throw new FableError('Ожидалось значение.', line, column);
+  if (!tokens.length) throw new XyzError('Ожидалось значение.', line, column);
   const result = logicalOr();
-  if (position < tokens.length) throw new FableError('Лишняя часть выражения.', line, current().column);
+  if (position < tokens.length) throw new XyzError('Лишняя часть выражения.', line, current().column);
   return result;
 }
 
@@ -313,23 +313,23 @@ function parseSimpleStatement(sourceLine) {
   }
   const expression = parseExpression(text, sourceLine.line, sourceLine.column);
   if (expression.kind === 'call' || expression.kind === 'methodCall') return { kind: 'expression', expression, ...sourceLine };
-  throw new FableError('Ожидалось объявление переменной, присваивание, условие или print(...).', sourceLine.line, sourceLine.column);
+  throw new XyzError('Ожидалось объявление переменной, присваивание, условие или print(...).', sourceLine.line, sourceLine.column);
 }
 
 function parseParameters(text, line, column) {
   const trimmed = text.trim();
   if (!trimmed) return [];
-  if (trimmed.includes(',')) throw new FableError('Параметры функции разделяются пробелами, без запятых.', line, column);
+  if (trimmed.includes(',')) throw new XyzError('Параметры функции разделяются пробелами, без запятых.', line, column);
   const parts = trimmed.split(/\s+/);
-  if (parts.length % 2 !== 0) throw new FableError('Для каждого параметра нужны тип и имя.', line, column);
+  if (parts.length % 2 !== 0) throw new XyzError('Для каждого параметра нужны тип и имя.', line, column);
   const parameters = [];
   const names = new Set();
   for (let index = 0; index < parts.length; index += 2) {
     const type = parts[index];
     const name = parts[index + 1];
-    if (!['int', 'float', 'string', 'bool'].includes(type)) throw new FableError(`Неизвестный тип параметра «${type}».`, line, column);
-    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) throw new FableError(`Некорректное имя параметра «${name}».`, line, column);
-    if (names.has(name)) throw new FableError(`Параметр «${name}» указан дважды.`, line, column);
+    if (!['int', 'float', 'string', 'bool'].includes(type)) throw new XyzError(`Неизвестный тип параметра «${type}».`, line, column);
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) throw new XyzError(`Некорректное имя параметра «${name}».`, line, column);
+    if (names.has(name)) throw new XyzError(`Параметр «${name}» указан дважды.`, line, column);
     names.add(name);
     parameters.push({ type, name });
   }
@@ -343,12 +343,12 @@ function parseConstructorParameters(text, line, column) {
   const names = new Set();
   for (const rawParameter of trimmed.split(',')) {
     const parts = rawParameter.trim().split(/\s+/);
-    if (parts.length > 2) throw new FableError(`Некорректный параметр конструктора «${rawParameter.trim()}».`, line, column);
+    if (parts.length > 2) throw new XyzError(`Некорректный параметр конструктора «${rawParameter.trim()}».`, line, column);
     const type = parts.length === 2 ? parts[0] : 'any';
     const name = parts.length === 2 ? parts[1] : parts[0];
-    if (!['int', 'float', 'string', 'bool', 'any'].includes(type)) throw new FableError(`Неизвестный тип параметра «${type}».`, line, column);
-    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) throw new FableError(`Некорректный параметр конструктора «${name}».`, line, column);
-    if (names.has(name)) throw new FableError(`Параметр «${name}» указан дважды.`, line, column);
+    if (!['int', 'float', 'string', 'bool', 'any'].includes(type)) throw new XyzError(`Неизвестный тип параметра «${type}».`, line, column);
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) throw new XyzError(`Некорректный параметр конструктора «${name}».`, line, column);
+    if (names.has(name)) throw new XyzError(`Параметр «${name}» указан дважды.`, line, column);
     names.add(name);
     parameters.push({ type, name });
   }
@@ -359,7 +359,7 @@ function parseClass(lines, index, sourceLine, match) {
   const [, name, sameLineBrace] = match;
   let currentIndex = index + 1;
   if (!sameLineBrace) {
-    if (lines[currentIndex]?.text !== '{') throw new FableError('После имени класса ожидалась открывающая скобка {.', sourceLine.line, sourceLine.column);
+    if (lines[currentIndex]?.text !== '{') throw new XyzError('После имени класса ожидалась открывающая скобка {.', sourceLine.line, sourceLine.column);
     currentIndex += 1;
   }
   const fields = [];
@@ -375,7 +375,7 @@ function parseClass(lines, index, sourceLine, match) {
     }
     const constructorMatch = currentLine.text.match(/^__init\s*\((.*)\)\s*(\{)?$/);
     if (constructorMatch) {
-      if (constructor) throw new FableError('В классе может быть только один __init.', currentLine.line, currentLine.column);
+      if (constructor) throw new XyzError('В классе может быть только один __init.', currentLine.line, currentLine.column);
       const body = parseFollowingBlock(lines, currentIndex, Boolean(constructorMatch[2]), currentLine, '__init');
       constructor = {
         kind: 'constructor', name: '__init',
@@ -397,26 +397,26 @@ function parseClass(lines, index, sourceLine, match) {
       currentIndex = body.next;
       continue;
     }
-    throw new FableError('В классе ожидалось поле, __init или метод.', currentLine.line, currentLine.column);
+    throw new XyzError('В классе ожидалось поле, __init или метод.', currentLine.line, currentLine.column);
   }
-  if (lines[currentIndex]?.text !== '}') throw new FableError(`Класс «${name}» не закрыт скобкой }.`, sourceLine.line, sourceLine.column);
+  if (lines[currentIndex]?.text !== '}') throw new XyzError(`Класс «${name}» не закрыт скобкой }.`, sourceLine.line, sourceLine.column);
   return { node: { kind: 'class', name, fields, methods, constructor, ...sourceLine }, next: currentIndex + 1 };
 }
 
 function parseFollowingBlock(lines, index, sameLineBrace, sourceLine, label) {
   let bodyStart = index + 1;
   if (!sameLineBrace) {
-    if (lines[bodyStart]?.text !== '{') throw new FableError(`После ${label} ожидалась открывающая скобка { .`, sourceLine.line, sourceLine.column);
+    if (lines[bodyStart]?.text !== '{') throw new XyzError(`После ${label} ожидалась открывающая скобка { .`, sourceLine.line, sourceLine.column);
     bodyStart += 1;
   }
   const body = parseBlock(lines, bodyStart, true);
-  if (body.terminator !== '}') throw new FableError(`Блок ${label} должен завершаться скобкой } .`, lines[body.index].line, lines[body.index].column);
+  if (body.terminator !== '}') throw new XyzError(`Блок ${label} должен завершаться скобкой } .`, lines[body.index].line, lines[body.index].column);
   return { statements: body.statements, next: body.index + 1 };
 }
 
 function parseIfStatement(lines, index, sourceLine) {
   const ifMatch = sourceLine.text.match(/^if\s+(.+)\s*\{$/);
-  if (!ifMatch) throw new FableError('Некорректное условие if.', sourceLine.line, sourceLine.column);
+  if (!ifMatch) throw new XyzError('Некорректное условие if.', sourceLine.line, sourceLine.column);
   const conditionText = ifMatch[1].trim();
   const conditionColumn = sourceLine.column + sourceLine.text.indexOf(conditionText);
   const thenBlock = parseBlock(lines, index + 1, true);
@@ -434,12 +434,12 @@ function parseIfStatement(lines, index, sourceLine) {
     next = nested.next;
   } else if (thenBlock.terminator === '} else {') {
     const elseBlock = parseBlock(lines, next, true);
-    if (elseBlock.terminator !== '}') throw new FableError('Некорректное завершение блока else.', lines[elseBlock.index].line, lines[elseBlock.index].column);
+    if (elseBlock.terminator !== '}') throw new XyzError('Некорректное завершение блока else.', lines[elseBlock.index].line, lines[elseBlock.index].column);
     elseBranch = elseBlock.statements;
     next = elseBlock.index + 1;
   } else if (lines[next]?.text === 'else {') {
     const elseBlock = parseBlock(lines, next + 1, true);
-    if (elseBlock.terminator !== '}') throw new FableError('Некорректное завершение блока else.', lines[elseBlock.index].line, lines[elseBlock.index].column);
+    if (elseBlock.terminator !== '}') throw new XyzError('Некорректное завершение блока else.', lines[elseBlock.index].line, lines[elseBlock.index].column);
     elseBranch = elseBlock.statements;
     next = elseBlock.index + 1;
   }
@@ -460,12 +460,12 @@ function parseBlock(lines, start, nested) {
       || /^else\s+if\s+.+\s*\{$/.test(sourceLine.text)
       || /^}\s*catch\s+[A-Za-z_][A-Za-z0-9_]*\s*\{$/.test(sourceLine.text)
       || /^catch\s+[A-Za-z_][A-Za-z0-9_]*\s*\{$/.test(sourceLine.text)) {
-      if (!nested) throw new FableError('Лишняя закрывающая скобка.', sourceLine.line, sourceLine.column);
+      if (!nested) throw new XyzError('Лишняя закрывающая скобка.', sourceLine.line, sourceLine.column);
       return { statements, index, terminator: sourceLine.text };
     }
     const classMatch = sourceLine.text.match(/^class\s+([A-Za-z_][A-Za-z0-9_]*)\s*(\{)?$/);
     if (classMatch) {
-      if (nested) throw new FableError('Классы можно объявлять только на верхнем уровне.', sourceLine.line, sourceLine.column);
+      if (nested) throw new XyzError('Классы можно объявлять только на верхнем уровне.', sourceLine.line, sourceLine.column);
       const parsedClass = parseClass(lines, index, sourceLine, classMatch);
       statements.push(parsedClass.node);
       index = parsedClass.next;
@@ -473,15 +473,15 @@ function parseBlock(lines, start, nested) {
     }
     const functionMatch = sourceLine.text.match(/^func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\((.*)\)\s*(?:->\s*(int|float|string|bool))?\s*(\{)?$/);
     if (functionMatch) {
-      if (nested) throw new FableError('Функции можно объявлять только на верхнем уровне.', sourceLine.line, sourceLine.column);
+      if (nested) throw new XyzError('Функции можно объявлять только на верхнем уровне.', sourceLine.line, sourceLine.column);
       const [, name, parametersText, returnType, sameLineBrace] = functionMatch;
       let bodyStart = index + 1;
       if (!sameLineBrace) {
-        if (lines[bodyStart]?.text !== '{') throw new FableError('После заголовка функции ожидалась открывающая скобка {.', sourceLine.line, sourceLine.column);
+        if (lines[bodyStart]?.text !== '{') throw new XyzError('После заголовка функции ожидалась открывающая скобка {.', sourceLine.line, sourceLine.column);
         bodyStart += 1;
       }
       const body = parseBlock(lines, bodyStart, true);
-      if (body.terminator !== '}') throw new FableError('Функция должна завершаться скобкой }.', lines[body.index].line, lines[body.index].column);
+      if (body.terminator !== '}') throw new XyzError('Функция должна завершаться скобкой }.', lines[body.index].line, lines[body.index].column);
       statements.push({
         kind: 'function', name,
         parameters: parseParameters(parametersText, sourceLine.line, sourceLine.column + sourceLine.text.indexOf(parametersText)),
@@ -543,7 +543,7 @@ function parseBlock(lines, start, nested) {
     if (trySameLine || tryNextLine) {
       let bodyStart = index + 1;
       if (!trySameLine) {
-        if (lines[bodyStart]?.text !== '{') throw new FableError('После try ожидалась открывающая скобка {.', sourceLine.line, sourceLine.column);
+        if (lines[bodyStart]?.text !== '{') throw new XyzError('После try ожидалась открывающая скобка {.', sourceLine.line, sourceLine.column);
         bodyStart += 1;
       }
       const tryBlock = parseBlock(lines, bodyStart, true);
@@ -553,9 +553,9 @@ function parseBlock(lines, start, nested) {
         catchMatch = lines[catchStart]?.text.match(/^catch\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{$/);
         if (catchMatch) catchStart += 1;
       }
-      if (!catchMatch) throw new FableError('После try ожидался блок catch error { ... }.', sourceLine.line, sourceLine.column);
+      if (!catchMatch) throw new XyzError('После try ожидался блок catch error { ... }.', sourceLine.line, sourceLine.column);
       const catchBlock = parseBlock(lines, catchStart, true);
-      if (catchBlock.terminator !== '}') throw new FableError('Некорректное завершение блока catch.', lines[catchBlock.index].line, lines[catchBlock.index].column);
+      if (catchBlock.terminator !== '}') throw new XyzError('Некорректное завершение блока catch.', lines[catchBlock.index].line, lines[catchBlock.index].column);
       statements.push({
         kind: 'try',
         tryBody: tryBlock.statements,
@@ -579,7 +579,7 @@ function parseBlock(lines, start, nested) {
   }
   if (nested) {
     const fallback = lines[lines.length - 1] ?? { line: 1, column: 1 };
-    throw new FableError('Блок не закрыт фигурной скобкой.', fallback.line, fallback.column);
+    throw new XyzError('Блок не закрыт фигурной скобкой.', fallback.line, fallback.column);
   }
   return { statements, index };
 }
@@ -626,7 +626,7 @@ const declaredType = (text) => {
 function typeOf(expression, symbols, context) {
   if (expression.kind === 'literal') return expression.valueType;
   if (expression.kind === 'identifier') {
-    if (!symbols.has(expression.name)) throw new FableError(`Переменная «${expression.name}» не объявлена.`, expression.line, expression.column);
+    if (!symbols.has(expression.name)) throw new XyzError(`Переменная «${expression.name}» не объявлена.`, expression.line, expression.column);
     return symbols.get(expression.name);
   }
   if (expression.kind === 'list') {
@@ -648,8 +648,8 @@ function typeOf(expression, symbols, context) {
     const object = typeOf(expression.object, symbols, context);
     const index = typeOf(expression.index, symbols, context);
     if (object === 'any') return 'any';
-    if (typeof object === 'string' || object.kind !== 'list') throw new FableError('Индекс можно применять только к списку.', expression.line, expression.column);
-    if (index !== 'int') throw new FableError('Индекс списка должен иметь тип int.', expression.line, expression.column);
+    if (typeof object === 'string' || object.kind !== 'list') throw new XyzError('Индекс можно применять только к списку.', expression.line, expression.column);
+    if (index !== 'int') throw new XyzError('Индекс списка должен иметь тип int.', expression.line, expression.column);
     return object.element;
   }
   if (expression.kind === 'member') {
@@ -658,19 +658,19 @@ function typeOf(expression, symbols, context) {
     if (typeof object !== 'string' && object.kind === 'module') return builtinMemberType(object.name, expression.name);
     if (expression.name === 'len' && (object === 'string' || (typeof object !== 'string' && (object.kind === 'list' || object.kind === 'table')))) return 'int';
     if (typeof object !== 'string' && object.kind === 'table') {
-      if (!object.fields.has(expression.name)) throw new FableError(`В таблице нет ключа «${expression.name}».`, expression.line, expression.column);
+      if (!object.fields.has(expression.name)) throw new XyzError(`В таблице нет ключа «${expression.name}».`, expression.line, expression.column);
       return object.fields.get(expression.name);
     }
     if (typeof object !== 'string' && object.kind === 'instance') {
-      if (!object.fields.has(expression.name)) throw new FableError(`В классе ${object.name} нет поля «${expression.name}».`, expression.line, expression.column);
+      if (!object.fields.has(expression.name)) throw new XyzError(`В классе ${object.name} нет поля «${expression.name}».`, expression.line, expression.column);
       return object.fields.get(expression.name);
     }
-    throw new FableError(`У типа ${typeName(object)} нет свойства «${expression.name}».`, expression.line, expression.column);
+    throw new XyzError(`У типа ${typeName(object)} нет свойства «${expression.name}».`, expression.line, expression.column);
   }
   if (expression.kind === 'methodCall') {
     const object = typeOf(expression.object, symbols, context);
     const methodArguments = (count) => {
-      if (expression.args.length !== count) throw new FableError(`Метод ${expression.name} ожидает ${count === 1 ? 'один аргумент' : `${count} аргумента`}.`, expression.line, expression.column);
+      if (expression.args.length !== count) throw new XyzError(`Метод ${expression.name} ожидает ${count === 1 ? 'один аргумент' : `${count} аргумента`}.`, expression.line, expression.column);
       return expression.args.map((argument) => typeOf(argument, symbols, context));
     };
     if (object === 'any') {
@@ -680,7 +680,7 @@ function typeOf(expression, symbols, context) {
         upper: 'string', lower: 'string', replace: 'string', split: { kind: 'list', element: 'string' },
       };
       const counts = { add: 1, remove: 1, insert: 2, clear: 0, contains: 1, keys: 0, values: 0, upper: 0, lower: 0, replace: 2, split: 1 };
-      if (!(expression.name in returnTypes)) throw new FableError(`У типа any нет метода «${expression.name}».`, expression.line, expression.column);
+      if (!(expression.name in returnTypes)) throw new XyzError(`У типа any нет метода «${expression.name}».`, expression.line, expression.column);
       methodArguments(counts[expression.name]);
       return returnTypes[expression.name];
     }
@@ -690,95 +690,95 @@ function typeOf(expression, symbols, context) {
     }
     if (typeof object !== 'string' && object.kind === 'instance') {
       const method = object.methods.get(expression.name);
-      if (!method) throw new FableError(`В классе ${object.name} нет метода «${expression.name}».`, expression.line, expression.column);
-      if (expression.args.length !== method.parameters.length) throw new FableError(`Метод «${expression.name}» ожидает ${method.parameters.length} аргументов.`, expression.line, expression.column);
+      if (!method) throw new XyzError(`В классе ${object.name} нет метода «${expression.name}».`, expression.line, expression.column);
+      if (expression.args.length !== method.parameters.length) throw new XyzError(`Метод «${expression.name}» ожидает ${method.parameters.length} аргументов.`, expression.line, expression.column);
       expression.args.forEach((argument, index) => {
         const actual = typeOf(argument, symbols, context);
         const expected = method.parameters[index].type;
-        if (!assignable(expected, actual)) throw new FableError(`Аргумент ${index + 1} метода «${expression.name}» должен иметь тип ${typeName(expected)}.`, argument.line, argument.column);
+        if (!assignable(expected, actual)) throw new XyzError(`Аргумент ${index + 1} метода «${expression.name}» должен иметь тип ${typeName(expected)}.`, argument.line, argument.column);
       });
       if (!method.returnType) inferFunction(method, context);
       return method.returnType;
     }
     if (object === 'string') {
       const counts = { upper: 0, lower: 0, contains: 1, replace: 2, split: 1 };
-      if (!(expression.name in counts)) throw new FableError(`У типа string нет метода «${expression.name}».`, expression.line, expression.column);
+      if (!(expression.name in counts)) throw new XyzError(`У типа string нет метода «${expression.name}».`, expression.line, expression.column);
       const argumentsTypes = methodArguments(counts[expression.name]);
-      if (argumentsTypes.some((argument) => argument !== 'string' && argument !== 'any')) throw new FableError(`Метод ${expression.name} ожидает аргументы типа string.`, expression.line, expression.column);
+      if (argumentsTypes.some((argument) => argument !== 'string' && argument !== 'any')) throw new XyzError(`Метод ${expression.name} ожидает аргументы типа string.`, expression.line, expression.column);
       return expression.name === 'contains' ? 'bool' : expression.name === 'split' ? { kind: 'list', element: 'string' } : 'string';
     }
     if (object.kind === 'table') {
       const counts = { keys: 0, values: 0, contains: 1 };
-      if (!(expression.name in counts)) throw new FableError(`У типа table нет метода «${expression.name}».`, expression.line, expression.column);
+      if (!(expression.name in counts)) throw new XyzError(`У типа table нет метода «${expression.name}».`, expression.line, expression.column);
       const argumentsTypes = methodArguments(counts[expression.name]);
-      if (expression.name === 'contains' && argumentsTypes[0] !== 'string' && argumentsTypes[0] !== 'any') throw new FableError('Метод contains таблицы ожидает ключ типа string.', expression.line, expression.column);
+      if (expression.name === 'contains' && argumentsTypes[0] !== 'string' && argumentsTypes[0] !== 'any') throw new XyzError('Метод contains таблицы ожидает ключ типа string.', expression.line, expression.column);
       if (expression.name === 'keys') return { kind: 'list', element: 'string' };
       if (expression.name === 'values') return { kind: 'list', element: 'any' };
       return 'bool';
     }
-    if (object.kind !== 'list' || !['add', 'remove', 'insert', 'clear', 'contains'].includes(expression.name)) throw new FableError(`У типа ${typeName(object)} нет метода «${expression.name}».`, expression.line, expression.column);
+    if (object.kind !== 'list' || !['add', 'remove', 'insert', 'clear', 'contains'].includes(expression.name)) throw new XyzError(`У типа ${typeName(object)} нет метода «${expression.name}».`, expression.line, expression.column);
     const counts = { add: 1, remove: 1, insert: 2, clear: 0, contains: 1 };
     const argumentsTypes = methodArguments(counts[expression.name]);
-    if (expression.name === 'insert' && argumentsTypes[0] !== 'int' && argumentsTypes[0] !== 'any') throw new FableError('Первый аргумент insert должен иметь тип int.', expression.line, expression.column);
+    if (expression.name === 'insert' && argumentsTypes[0] !== 'int' && argumentsTypes[0] !== 'any') throw new XyzError('Первый аргумент insert должен иметь тип int.', expression.line, expression.column);
     if (expression.name !== 'clear') {
       const argument = argumentsTypes[expression.name === 'insert' ? 1 : 0];
       if (object.element === 'unknown' && ['add', 'insert'].includes(expression.name)) object.element = argument;
-      else if (object.element !== 'unknown' && !assignable(object.element, argument)) throw new FableError(`Метод ${expression.name} ожидает ${typeName(object.element)}, получен ${typeName(argument)}.`, expression.line, expression.column);
+      else if (object.element !== 'unknown' && !assignable(object.element, argument)) throw new XyzError(`Метод ${expression.name} ожидает ${typeName(object.element)}, получен ${typeName(argument)}.`, expression.line, expression.column);
     }
     return ['remove', 'contains'].includes(expression.name) ? 'bool' : 'void';
   }
   if (expression.kind === 'call') {
     if (expression.name === 'input') {
-      if (expression.args.length > 1) throw new FableError('input ожидает не больше одного аргумента.', expression.line, expression.column);
+      if (expression.args.length > 1) throw new XyzError('input ожидает не больше одного аргумента.', expression.line, expression.column);
       if (expression.args.length === 1) {
         const promptType = typeOf(expression.args[0], symbols, context);
-        if (promptType !== 'string' && promptType !== 'any') throw new FableError('Подсказка input должна иметь тип string.', expression.args[0].line, expression.args[0].column);
+        if (promptType !== 'string' && promptType !== 'any') throw new XyzError('Подсказка input должна иметь тип string.', expression.args[0].line, expression.args[0].column);
       }
       return 'string';
     }
     if (expression.name === 'range') {
-      if (expression.args.length < 1 || expression.args.length > 3) throw new FableError('range ожидает от одного до трёх аргументов.', expression.line, expression.column);
+      if (expression.args.length < 1 || expression.args.length > 3) throw new XyzError('range ожидает от одного до трёх аргументов.', expression.line, expression.column);
       for (const argument of expression.args) {
         const argumentType = typeOf(argument, symbols, context);
-        if (argumentType !== 'int' && argumentType !== 'any') throw new FableError('Аргументы range должны иметь тип int.', argument.line, argument.column);
+        if (argumentType !== 'int' && argumentType !== 'any') throw new XyzError('Аргументы range должны иметь тип int.', argument.line, argument.column);
       }
       return BUILTIN_FUNCTIONS.get('range');
     }
     if (expression.name === 'execute') {
-      if (expression.args.length < 1 || expression.args.length > 3) throw new FableError('execute ожидает от одного до трёх аргументов.', expression.line, expression.column);
+      if (expression.args.length < 1 || expression.args.length > 3) throw new XyzError('execute ожидает от одного до трёх аргументов.', expression.line, expression.column);
       const fileType = typeOf(expression.args[0], symbols, context);
-      if (fileType !== 'string' && fileType !== 'any') throw new FableError('Путь execute должен иметь тип string.', expression.args[0].line, expression.args[0].column);
+      if (fileType !== 'string' && fileType !== 'any') throw new XyzError('Путь execute должен иметь тип string.', expression.args[0].line, expression.args[0].column);
       if (expression.args.length >= 2) {
         const functionType = typeOf(expression.args[1], symbols, context);
-        if (functionType !== 'string' && functionType !== 'any') throw new FableError('Имя функции execute должно иметь тип string.', expression.args[1].line, expression.args[1].column);
+        if (functionType !== 'string' && functionType !== 'any') throw new XyzError('Имя функции execute должно иметь тип string.', expression.args[1].line, expression.args[1].column);
       }
       if (expression.args.length === 3) {
         const argumentsType = typeOf(expression.args[2], symbols, context);
-        if (argumentsType !== 'any' && (typeof argumentsType === 'string' || argumentsType.kind !== 'list')) throw new FableError('Аргументы функции execute нужно передать списком.', expression.args[2].line, expression.args[2].column);
+        if (argumentsType !== 'any' && (typeof argumentsType === 'string' || argumentsType.kind !== 'list')) throw new XyzError('Аргументы функции execute нужно передать списком.', expression.args[2].line, expression.args[2].column);
       }
       return 'any';
     }
     if (BUILTIN_FUNCTIONS.has(expression.name)) {
-      if (expression.args.length !== 1) throw new FableError(`${expression.name} ожидает ровно один аргумент.`, expression.line, expression.column);
+      if (expression.args.length !== 1) throw new XyzError(`${expression.name} ожидает ровно один аргумент.`, expression.line, expression.column);
       typeOf(expression.args[0], symbols, context);
       return BUILTIN_FUNCTIONS.get(expression.name);
     }
     const fn = context.functions.get(expression.name);
     if (!fn) {
       const classInfo = context.classes.get(expression.name);
-      if (!classInfo) throw new FableError(`Функция или класс «${expression.name}» не объявлены.`, expression.line, expression.column);
+      if (!classInfo) throw new XyzError(`Функция или класс «${expression.name}» не объявлены.`, expression.line, expression.column);
       const parameters = classInfo.constructor?.parameters ?? [];
-      if (expression.args.length !== parameters.length) throw new FableError(`Класс «${expression.name}» ожидает ${parameters.length} аргументов.`, expression.line, expression.column);
+      if (expression.args.length !== parameters.length) throw new XyzError(`Класс «${expression.name}» ожидает ${parameters.length} аргументов.`, expression.line, expression.column);
       expression.args.forEach((argument) => typeOf(argument, symbols, context));
       return classInfo;
     }
     if (expression.args.length !== fn.parameters.length) {
-      throw new FableError(`Функция «${expression.name}» ожидает ${fn.parameters.length} аргументов, получено ${expression.args.length}.`, expression.line, expression.column);
+      throw new XyzError(`Функция «${expression.name}» ожидает ${fn.parameters.length} аргументов, получено ${expression.args.length}.`, expression.line, expression.column);
     }
     expression.args.forEach((argument, index) => {
       const actual = typeOf(argument, symbols, context);
       const expected = fn.parameters[index].type;
-      if (!assignable(expected, actual)) throw new FableError(`Аргумент ${index + 1} функции «${expression.name}» должен иметь тип ${typeName(expected)}, получен ${typeName(actual)}.`, argument.line, argument.column);
+      if (!assignable(expected, actual)) throw new XyzError(`Аргумент ${index + 1} функции «${expression.name}» должен иметь тип ${typeName(expected)}, получен ${typeName(actual)}.`, argument.line, argument.column);
     });
     if (!fn.returnType) inferFunction(fn, context);
     return fn.returnType;
@@ -786,33 +786,33 @@ function typeOf(expression, symbols, context) {
   if (expression.kind === 'unary') {
     const type = typeOf(expression.value, symbols, context);
     if (expression.operator === 'not') {
-      if (type !== 'bool' && type !== 'any') throw new FableError('Оператор not можно применять только к bool.', expression.line, expression.column);
+      if (type !== 'bool' && type !== 'any') throw new XyzError('Оператор not можно применять только к bool.', expression.line, expression.column);
       return 'bool';
     }
     if (type === 'any') return 'any';
-    if (!numeric(type)) throw new FableError('Унарный минус можно применять только к числу.', expression.line, expression.column);
+    if (!numeric(type)) throw new XyzError('Унарный минус можно применять только к числу.', expression.line, expression.column);
     return type;
   }
   const left = typeOf(expression.left, symbols, context);
   const right = typeOf(expression.right, symbols, context);
   if (expression.operator === 'and' || expression.operator === 'or') {
-    if (left !== 'bool' || right !== 'bool') throw new FableError(`Оператор ${expression.operator} требует значения bool.`, expression.line, expression.column);
+    if (left !== 'bool' || right !== 'bool') throw new XyzError(`Оператор ${expression.operator} требует значения bool.`, expression.line, expression.column);
     return 'bool';
   }
   if (expression.operator === '==' || expression.operator === '!=') {
     if (left === 'any' || right === 'any') return 'bool';
-    if (!sameType(left, right) && !(numeric(left) && numeric(right))) throw new FableError(`Нельзя сравнить типы ${typeName(left)} и ${typeName(right)}.`, expression.line, expression.column);
-    if (typeof left !== 'string' || typeof right !== 'string') throw new FableError('Сравнение коллекций пока не поддерживается.', expression.line, expression.column);
+    if (!sameType(left, right) && !(numeric(left) && numeric(right))) throw new XyzError(`Нельзя сравнить типы ${typeName(left)} и ${typeName(right)}.`, expression.line, expression.column);
+    if (typeof left !== 'string' || typeof right !== 'string') throw new XyzError('Сравнение коллекций пока не поддерживается.', expression.line, expression.column);
     return 'bool';
   }
   if (['<', '>', '<=', '>='].includes(expression.operator)) {
     if (left === 'any' || right === 'any') return 'bool';
-    if (!numeric(left) || !numeric(right)) throw new FableError(`Оператор ${expression.operator} требует числа.`, expression.line, expression.column);
+    if (!numeric(left) || !numeric(right)) throw new XyzError(`Оператор ${expression.operator} требует числа.`, expression.line, expression.column);
     return 'bool';
   }
   if (left === 'any' || right === 'any') return 'any';
   if (expression.operator === '+' && left === 'string' && right === 'string') return 'string';
-  if (!numeric(left) || !numeric(right)) throw new FableError(`Операция «${expression.operator}» не поддерживает типы ${typeName(left)} и ${typeName(right)}.`, expression.line, expression.column);
+  if (!numeric(left) || !numeric(right)) throw new XyzError(`Операция «${expression.operator}» не поддерживает типы ${typeName(left)} и ${typeName(right)}.`, expression.line, expression.column);
   return expression.operator === '/' || left === 'float' || right === 'float' ? 'float' : 'int';
 }
 
@@ -822,7 +822,7 @@ function mergeReturnTypes(types, line, column) {
   for (const type of types.slice(1)) {
     if (sameType(type, result)) continue;
     if (numeric(type) && numeric(result)) result = 'float';
-    else throw new FableError(`Функция возвращает несовместимые типы ${result} и ${type}.`, line, column);
+    else throw new XyzError(`Функция возвращает несовместимые типы ${result} и ${type}.`, line, column);
   }
   return result;
 }
@@ -831,7 +831,7 @@ function inferFunction(fn, context) {
   if (fn.checked) return fn.returnType;
   if (fn.checking) {
     if (fn.returnType) return fn.returnType;
-    throw new FableError(`Для рекурсивной функции «${fn.name}» нужно указать тип после ->.`, fn.line, fn.column);
+    throw new XyzError(`Для рекурсивной функции «${fn.name}» нужно указать тип после ->.`, fn.line, fn.column);
   }
   fn.checking = true;
   const symbols = new Map(fn.parameters.map((parameter) => [parameter.name, parameter.type]));
@@ -840,8 +840,8 @@ function inferFunction(fn, context) {
   checkBlock(fn.body, symbols, { ...context, currentFunction: fn }, returns);
   const inferred = mergeReturnTypes(returns, fn.line, fn.column);
   if (fn.declaredReturnType) {
-    if (!returns.length) throw new FableError(`Функция «${fn.name}» должна возвращать ${fn.declaredReturnType}.`, fn.line, fn.column);
-    if (!assignable(fn.declaredReturnType, inferred)) throw new FableError(`Функция «${fn.name}» объявлена как ${fn.declaredReturnType}, но возвращает ${inferred}.`, fn.line, fn.column);
+    if (!returns.length) throw new XyzError(`Функция «${fn.name}» должна возвращать ${fn.declaredReturnType}.`, fn.line, fn.column);
+    if (!assignable(fn.declaredReturnType, inferred)) throw new XyzError(`Функция «${fn.name}» объявлена как ${fn.declaredReturnType}, но возвращает ${inferred}.`, fn.line, fn.column);
     fn.returnType = fn.declaredReturnType;
   } else fn.returnType = inferred;
   fn.checking = false;
@@ -853,67 +853,67 @@ function checkBlock(program, symbols, context, returns = []) {
   for (const statement of program) {
     if (statement.kind === 'function' || statement.kind === 'class') continue;
     if (statement.kind === 'import') {
-      if (symbols.has(statement.name)) throw new FableError(`Имя «${statement.name}» уже используется.`, statement.line, statement.column);
+      if (symbols.has(statement.name)) throw new XyzError(`Имя «${statement.name}» уже используется.`, statement.line, statement.column);
       symbols.set(statement.name, { kind: 'module', name: statement.name });
     } else if (statement.kind === 'declaration') {
-      if (symbols.has(statement.name)) throw new FableError(`Переменная «${statement.name}» уже объявлена.`, statement.line, statement.nameColumn);
+      if (symbols.has(statement.name)) throw new XyzError(`Переменная «${statement.name}» уже объявлена.`, statement.line, statement.nameColumn);
       const actual = typeOf(statement.expression, symbols, context);
       const target = statement.declaredType === 'var' ? actual : declaredType(statement.declaredType);
-      if (!assignable(target, actual)) throw new FableError(`Нельзя присвоить значение типа ${typeName(actual)} переменной типа ${typeName(target)}.`, statement.line, statement.nameColumn);
+      if (!assignable(target, actual)) throw new XyzError(`Нельзя присвоить значение типа ${typeName(actual)} переменной типа ${typeName(target)}.`, statement.line, statement.nameColumn);
       symbols.set(statement.name, target);
     } else if (statement.kind === 'assignment') {
-      if (!symbols.has(statement.name)) throw new FableError(`Переменная «${statement.name}» не объявлена.`, statement.line, statement.nameColumn);
+      if (!symbols.has(statement.name)) throw new XyzError(`Переменная «${statement.name}» не объявлена.`, statement.line, statement.nameColumn);
       const target = symbols.get(statement.name);
       const actual = typeOf(statement.expression, symbols, context);
-      if (!assignable(target, actual)) throw new FableError(`Нельзя присвоить значение типа ${typeName(actual)} переменной типа ${typeName(target)}.`, statement.line, statement.nameColumn);
+      if (!assignable(target, actual)) throw new XyzError(`Нельзя присвоить значение типа ${typeName(actual)} переменной типа ${typeName(target)}.`, statement.line, statement.nameColumn);
     } else if (statement.kind === 'memberAssignment') {
       const object = typeOf(statement.object, symbols, context);
       const actual = typeOf(statement.expression, symbols, context);
-      if (typeof object === 'string' || !['instance', 'table'].includes(object.kind)) throw new FableError('Присваивание через точку доступно только объектам и таблицам.', statement.line, statement.column);
-      if (!object.fields.has(statement.name)) throw new FableError(`Нет поля или ключа «${statement.name}».`, statement.line, statement.column);
+      if (typeof object === 'string' || !['instance', 'table'].includes(object.kind)) throw new XyzError('Присваивание через точку доступно только объектам и таблицам.', statement.line, statement.column);
+      if (!object.fields.has(statement.name)) throw new XyzError(`Нет поля или ключа «${statement.name}».`, statement.line, statement.column);
       const expected = object.fields.get(statement.name);
-      if (!assignable(expected, actual)) throw new FableError(`Поле «${statement.name}» ожидает ${typeName(expected)}, получен ${typeName(actual)}.`, statement.line, statement.column);
+      if (!assignable(expected, actual)) throw new XyzError(`Поле «${statement.name}» ожидает ${typeName(expected)}, получен ${typeName(actual)}.`, statement.line, statement.column);
     } else if (statement.kind === 'if') {
       const conditionType = typeOf(statement.condition, symbols, context);
-      if (conditionType !== 'bool' && conditionType !== 'any') throw new FableError('Условие if должно иметь тип bool.', statement.line, statement.column);
+      if (conditionType !== 'bool' && conditionType !== 'any') throw new XyzError('Условие if должно иметь тип bool.', statement.line, statement.column);
       checkBlock(statement.thenBranch, new Map(symbols), context, returns);
       checkBlock(statement.elseBranch, new Map(symbols), context, returns);
     } else if (statement.kind === 'while') {
       const conditionType = typeOf(statement.condition, symbols, context);
-      if (conditionType !== 'bool' && conditionType !== 'any') throw new FableError('Условие while должно иметь тип bool.', statement.line, statement.column);
+      if (conditionType !== 'bool' && conditionType !== 'any') throw new XyzError('Условие while должно иметь тип bool.', statement.line, statement.column);
       checkBlock(statement.body, new Map(symbols), { ...context, loopDepth: (context.loopDepth || 0) + 1 }, returns);
     } else if (statement.kind === 'repeat') {
       const countType = typeOf(statement.count, symbols, context);
-      if (countType !== 'int') throw new FableError('Количество повторений должно иметь тип int.', statement.line, statement.column);
+      if (countType !== 'int') throw new XyzError('Количество повторений должно иметь тип int.', statement.line, statement.column);
       checkBlock(statement.body, new Map(symbols), { ...context, loopDepth: (context.loopDepth || 0) + 1 }, returns);
     } else if (statement.kind === 'for') {
-      if (symbols.has(statement.name)) throw new FableError(`Переменная «${statement.name}» уже объявлена.`, statement.line, statement.column);
+      if (symbols.has(statement.name)) throw new XyzError(`Переменная «${statement.name}» уже объявлена.`, statement.line, statement.column);
       const collectionType = typeOf(statement.collection, symbols, context);
       let itemType;
       if (typeof collectionType !== 'string' && collectionType.kind === 'list') itemType = collectionType.element;
       else if (typeof collectionType !== 'string' && collectionType.kind === 'table') itemType = 'string';
-      else throw new FableError('Цикл for работает со списком или таблицей.', statement.line, statement.column);
+      else throw new XyzError('Цикл for работает со списком или таблицей.', statement.line, statement.column);
       const loopSymbols = new Map(symbols);
       loopSymbols.set(statement.name, itemType);
       checkBlock(statement.body, loopSymbols, { ...context, loopDepth: (context.loopDepth || 0) + 1 }, returns);
     } else if (statement.kind === 'try') {
       checkBlock(statement.tryBody, new Map(symbols), context, returns);
-      if (symbols.has(statement.catchName)) throw new FableError(`Имя ошибки «${statement.catchName}» уже используется.`, statement.line, statement.column);
+      if (symbols.has(statement.catchName)) throw new XyzError(`Имя ошибки «${statement.catchName}» уже используется.`, statement.line, statement.column);
       const catchSymbols = new Map(symbols);
       catchSymbols.set(statement.catchName, 'string');
       checkBlock(statement.catchBody, catchSymbols, context, returns);
     } else if (statement.kind === 'break' || statement.kind === 'continue') {
-      if (!(context.loopDepth > 0)) throw new FableError(`${statement.kind} можно использовать только внутри цикла.`, statement.line, statement.column);
+      if (!(context.loopDepth > 0)) throw new XyzError(`${statement.kind} можно использовать только внутри цикла.`, statement.line, statement.column);
     } else if (statement.kind === 'return') {
-      if (!context.currentFunction) throw new FableError('return можно использовать только внутри функции.', statement.line, statement.column);
+      if (!context.currentFunction) throw new XyzError('return можно использовать только внутри функции.', statement.line, statement.column);
       const actual = statement.expression ? typeOf(statement.expression, symbols, context) : 'void';
       if (context.currentFunction.declaredReturnType && !assignable(context.currentFunction.declaredReturnType, actual)) {
-        throw new FableError(`Ожидался тип ${typeName(context.currentFunction.declaredReturnType)}, получен ${typeName(actual)}.`, statement.line, statement.column);
+        throw new XyzError(`Ожидался тип ${typeName(context.currentFunction.declaredReturnType)}, получен ${typeName(actual)}.`, statement.line, statement.column);
       }
       returns.push(actual);
     } else {
       const type = typeOf(statement.expression, symbols, context);
-      if (statement.kind === 'print' && type === 'void') throw new FableError('Нельзя вывести результат функции без возвращаемого значения.', statement.line, statement.column);
+      if (statement.kind === 'print' && type === 'void') throw new XyzError('Нельзя вывести результат функции без возвращаемого значения.', statement.line, statement.column);
     }
   }
   return symbols;
@@ -924,16 +924,16 @@ function check(program) {
   const classes = new Map();
   for (const statement of program) {
     if (statement.kind !== 'class') continue;
-    if (BUILTIN_FUNCTIONS.has(statement.name)) throw new FableError(`Имя «${statement.name}» зарезервировано встроенной функцией.`, statement.line, statement.column);
-    if (classes.has(statement.name)) throw new FableError(`Класс «${statement.name}» уже объявлен.`, statement.line, statement.column);
+    if (BUILTIN_FUNCTIONS.has(statement.name)) throw new XyzError(`Имя «${statement.name}» зарезервировано встроенной функцией.`, statement.line, statement.column);
+    if (classes.has(statement.name)) throw new XyzError(`Класс «${statement.name}» уже объявлен.`, statement.line, statement.column);
     const fields = new Map();
     for (const field of statement.fields) {
-      if (fields.has(field.name)) throw new FableError(`Поле «${field.name}» уже объявлено.`, field.line, field.column);
+      if (fields.has(field.name)) throw new XyzError(`Поле «${field.name}» уже объявлено.`, field.line, field.column);
       fields.set(field.name, field.type);
     }
     const classInfo = { kind: 'instance', name: statement.name, fields, methods: new Map(), constructor: null, node: statement };
     for (const methodNode of statement.methods) {
-      if (classInfo.methods.has(methodNode.name)) throw new FableError(`Метод «${methodNode.name}» уже объявлен.`, methodNode.line, methodNode.column);
+      if (classInfo.methods.has(methodNode.name)) throw new XyzError(`Метод «${methodNode.name}» уже объявлен.`, methodNode.line, methodNode.column);
       classInfo.methods.set(methodNode.name, { ...methodNode, returnType: methodNode.declaredReturnType, checking: false, checked: false, ownerClass: classInfo });
     }
     if (statement.constructor) classInfo.constructor = { ...statement.constructor, returnType: null, checking: false, checked: false, ownerClass: classInfo };
@@ -941,8 +941,8 @@ function check(program) {
   }
   for (const statement of program) {
     if (statement.kind !== 'function') continue;
-    if (BUILTIN_FUNCTIONS.has(statement.name)) throw new FableError(`Имя «${statement.name}» зарезервировано встроенной функцией.`, statement.line, statement.column);
-    if (functions.has(statement.name)) throw new FableError(`Функция «${statement.name}» уже объявлена.`, statement.line, statement.column);
+    if (BUILTIN_FUNCTIONS.has(statement.name)) throw new XyzError(`Имя «${statement.name}» зарезервировано встроенной функцией.`, statement.line, statement.column);
+    if (functions.has(statement.name)) throw new XyzError(`Функция «${statement.name}» уже объявлена.`, statement.line, statement.column);
     functions.set(statement.name, {
       ...statement,
       returnType: statement.declaredReturnType,
@@ -1000,7 +1000,7 @@ function evaluate(expression, values, runtime) {
   if (expression.kind === 'index') {
     const collection = evaluate(expression.object, values, runtime);
     const index = evaluate(expression.index, values, runtime);
-    if (index < 0 || index >= collection.length) throw new FableError(`Индекс ${index} находится вне списка.`, expression.line, expression.column);
+    if (index < 0 || index >= collection.length) throw new XyzError(`Индекс ${index} находится вне списка.`, expression.line, expression.column);
     return collection[index];
   }
   if (expression.kind === 'member') {
@@ -1014,14 +1014,14 @@ function evaluate(expression, values, runtime) {
     if (collection && collection.__module) {
       if (collection.__nativeFunctions) {
         const nativeFunction = collection.__nativeFunctions.get(expression.name);
-        if (!nativeFunction) throw new FableError(`Во встроенном модуле нет функции «${expression.name}».`, expression.line, expression.column);
+        if (!nativeFunction) throw new XyzError(`Во встроенном модуле нет функции «${expression.name}».`, expression.line, expression.column);
         try {
           const result = nativeFunction(...argumentValues);
           if (collection.__moduleName === 'window' && expression.name === 'update') runtime.steps = 0;
           return result;
         } catch (error) {
-          if (error instanceof FableError) throw error;
-          throw new FableError(`Ошибка ${collection.__moduleName}.${expression.name}: ${error.message}`, expression.line, expression.column);
+          if (error instanceof XyzError) throw error;
+          throw new XyzError(`Ошибка ${collection.__moduleName}.${expression.name}: ${error.message}`, expression.line, expression.column);
         }
       }
       if (collection.__functions.has(expression.name)) {
@@ -1030,12 +1030,12 @@ function evaluate(expression, values, runtime) {
       if (collection.__classes.has(expression.name)) {
         return instantiateClassNode(collection.__classes.get(expression.name), argumentValues, runtime, collection.__runtimeFunctions, collection.__runtimeClasses);
       }
-      throw new FableError(`В модуле нет функции или класса «${expression.name}».`, expression.line, expression.column);
+      throw new XyzError(`В модуле нет функции или класса «${expression.name}».`, expression.line, expression.column);
     }
     if (collection && collection.__className) {
       const classNode = collection.__classes.get(collection.__className);
       const method = classNode.methods.find((candidate) => candidate.name === expression.name);
-      if (!method) throw new FableError(`В классе «${collection.__className}» нет метода «${expression.name}».`, expression.line, expression.column);
+      if (!method) throw new XyzError(`В классе «${collection.__className}» нет метода «${expression.name}».`, expression.line, expression.column);
       return invokeFunctionNode(method, argumentValues, runtime, collection, collection.__functions, collection.__classes);
     }
     const value = argumentValues[0];
@@ -1052,7 +1052,7 @@ function evaluate(expression, values, runtime) {
       }
       if (expression.name === 'insert') {
         const [index, insertedValue] = argumentValues;
-        if (!Number.isInteger(index) || index < 0 || index > collection.length) throw new FableError(`Индекс ${index} находится вне списка.`, expression.line, expression.column);
+        if (!Number.isInteger(index) || index < 0 || index > collection.length) throw new XyzError(`Индекс ${index} находится вне списка.`, expression.line, expression.column);
         collection.splice(index, 0, insertedValue);
         return undefined;
       }
@@ -1072,19 +1072,19 @@ function evaluate(expression, values, runtime) {
       if (expression.name === 'values') return Object.values(collection);
       if (expression.name === 'contains') return Object.prototype.hasOwnProperty.call(collection, value);
     }
-    throw new FableError(`У значения нет метода «${expression.name}».`, expression.line, expression.column);
+    throw new XyzError(`У значения нет метода «${expression.name}».`, expression.line, expression.column);
   }
   if (expression.kind === 'call') {
     const argumentValues = expression.args.map((argument) => evaluate(argument, values, runtime));
     if (expression.name === 'input') return runtime.input(argumentValues[0] ?? '');
     if (expression.name === 'int') {
       const value = Number(argumentValues[0]);
-      if ((typeof argumentValues[0] === 'string' && !argumentValues[0].trim()) || !Number.isFinite(value)) throw new FableError('int не может преобразовать значение в целое число.', expression.line, expression.column);
+      if ((typeof argumentValues[0] === 'string' && !argumentValues[0].trim()) || !Number.isFinite(value)) throw new XyzError('int не может преобразовать значение в целое число.', expression.line, expression.column);
       return Math.trunc(value);
     }
     if (expression.name === 'float') {
       const value = Number(argumentValues[0]);
-      if ((typeof argumentValues[0] === 'string' && !argumentValues[0].trim()) || !Number.isFinite(value)) throw new FableError('float не может преобразовать значение в число.', expression.line, expression.column);
+      if ((typeof argumentValues[0] === 'string' && !argumentValues[0].trim()) || !Number.isFinite(value)) throw new XyzError('float не может преобразовать значение в число.', expression.line, expression.column);
       return value;
     }
     if (expression.name === 'string') return formatValue(argumentValues[0]);
@@ -1098,43 +1098,43 @@ function evaluate(expression, values, runtime) {
       return Boolean(value);
     }
     if (expression.name === 'range') {
-      if (!argumentValues.every(Number.isInteger)) throw new FableError('Аргументы range должны быть целыми числами.', expression.line, expression.column);
+      if (!argumentValues.every(Number.isInteger)) throw new XyzError('Аргументы range должны быть целыми числами.', expression.line, expression.column);
       const [start, end, step] = argumentValues.length === 1
         ? [0, argumentValues[0], 1]
         : [argumentValues[0], argumentValues[1], argumentValues[2] ?? 1];
-      if (step === 0) throw new FableError('Шаг range не может быть равен нулю.', expression.line, expression.column);
+      if (step === 0) throw new XyzError('Шаг range не может быть равен нулю.', expression.line, expression.column);
       const values = [];
       for (let value = start; step > 0 ? value < end : value > end; value += step) {
-        if (values.length >= 1000000) throw new FableError('range не может создать больше 1000000 значений.', expression.line, expression.column);
+        if (values.length >= 1000000) throw new XyzError('range не может создать больше 1000000 значений.', expression.line, expression.column);
         values.push(value);
       }
       return values;
     }
     if (expression.name === 'execute') {
       const [fileName, functionName, functionArguments = []] = argumentValues;
-      if (typeof fileName !== 'string' || !fileName.trim()) throw new FableError('execute ожидает непустой путь к файлу.', expression.line, expression.column);
-      if (functionName !== undefined && (typeof functionName !== 'string' || !functionName.trim())) throw new FableError('Имя функции execute должно быть непустой строкой.', expression.line, expression.column);
-      if (!Array.isArray(functionArguments)) throw new FableError('Аргументы функции execute нужно передать списком.', expression.line, expression.column);
-      if (!runtime.loadModule) throw new FableError('execute недоступен: загрузчик файлов не настроен.', expression.line, expression.column);
+      if (typeof fileName !== 'string' || !fileName.trim()) throw new XyzError('execute ожидает непустой путь к файлу.', expression.line, expression.column);
+      if (functionName !== undefined && (typeof functionName !== 'string' || !functionName.trim())) throw new XyzError('Имя функции execute должно быть непустой строкой.', expression.line, expression.column);
+      if (!Array.isArray(functionArguments)) throw new XyzError('Аргументы функции execute нужно передать списком.', expression.line, expression.column);
+      if (!runtime.loadModule) throw new XyzError('execute недоступен: загрузчик файлов не настроен.', expression.line, expression.column);
       let loaded;
       try {
         loaded = runtime.loadModule(fileName, runtime.currentFile);
       } catch (error) {
-        throw new FableError(`execute не смог открыть «${fileName}»: ${error.message}`, expression.line, expression.column);
+        throw new XyzError(`execute не смог открыть «${fileName}»: ${error.message}`, expression.line, expression.column);
       }
-      if (!loaded || typeof loaded.source !== 'string' || !loaded.filePath) throw new FableError(`execute не может запустить «${fileName}».`, expression.line, expression.column);
+      if (!loaded || typeof loaded.source !== 'string' || !loaded.filePath) throw new XyzError(`execute не может запустить «${fileName}».`, expression.line, expression.column);
       const namespace = executeModuleSource(loaded.source, loaded.filePath, runtime, false);
       if (functionName === undefined) return true;
       const fn = namespace.__functions.get(functionName);
-      if (!fn) throw new FableError(`В файле «${fileName}» нет экспортируемой функции «${functionName}».`, expression.line, expression.column);
-      if (functionArguments.length !== fn.parameters.length) throw new FableError(`Функция «${functionName}» ожидает ${fn.parameters.length} аргументов, получено ${functionArguments.length}.`, expression.line, expression.column);
+      if (!fn) throw new XyzError(`В файле «${fileName}» нет экспортируемой функции «${functionName}».`, expression.line, expression.column);
+      if (functionArguments.length !== fn.parameters.length) throw new XyzError(`Функция «${functionName}» ожидает ${fn.parameters.length} аргументов, получено ${functionArguments.length}.`, expression.line, expression.column);
       fn.parameters.forEach((parameter, index) => {
         const value = functionArguments[index];
         const matches = parameter.type === 'int' ? Number.isInteger(value)
           : parameter.type === 'float' ? typeof value === 'number' && Number.isFinite(value)
             : parameter.type === 'string' ? typeof value === 'string'
               : parameter.type === 'bool' ? typeof value === 'boolean' : true;
-        if (!matches) throw new FableError(`Аргумент ${index + 1} функции «${functionName}» должен иметь тип ${parameter.type}.`, expression.line, expression.column);
+        if (!matches) throw new XyzError(`Аргумент ${index + 1} функции «${functionName}» должен иметь тип ${parameter.type}.`, expression.line, expression.column);
       });
       return invokeFunctionNode(fn, functionArguments, runtime, undefined, namespace.__runtimeFunctions, namespace.__runtimeClasses);
     }
@@ -1155,8 +1155,8 @@ function evaluate(expression, values, runtime) {
   const right = evaluate(expression.right, values, runtime);
   return {
     '+': () => left + right, '-': () => left - right, '*': () => left * right,
-    '/': () => { if (right === 0) throw new FableError('Деление на ноль.', expression.line, expression.column); return left / right; },
-    '%': () => { if (right === 0) throw new FableError('Деление по модулю на ноль.', expression.line, expression.column); return left % right; },
+    '/': () => { if (right === 0) throw new XyzError('Деление на ноль.', expression.line, expression.column); return left / right; },
+    '%': () => { if (right === 0) throw new XyzError('Деление по модулю на ноль.', expression.line, expression.column); return left % right; },
     '==': () => left === right, '!=': () => left !== right,
     '<': () => left < right, '>': () => left > right, '<=': () => left <= right, '>=': () => left >= right,
   }[expression.operator]();
@@ -1176,7 +1176,7 @@ function executeBlock(program, values, runtime, scoped) {
   try {
     for (const statement of program) {
     runtime.steps += 1;
-    if (runtime.steps > runtime.maxSteps) throw new FableError('Превышен предел выполнения цикла.', statement.line, statement.column);
+    if (runtime.steps > runtime.maxSteps) throw new XyzError('Превышен предел выполнения цикла.', statement.line, statement.column);
     if (statement.kind === 'function' || statement.kind === 'class') continue;
     if (statement.kind === 'import') {
       values.set(statement.name, loadImportedModule(statement.name, runtime, statement));
@@ -1196,7 +1196,7 @@ function executeBlock(program, values, runtime, scoped) {
     } else if (statement.kind === 'while') {
       while (evaluate(statement.condition, values, runtime)) {
         runtime.steps += 1;
-        if (runtime.steps > runtime.maxSteps) throw new FableError('Превышен предел выполнения цикла.', statement.line, statement.column);
+        if (runtime.steps > runtime.maxSteps) throw new XyzError('Превышен предел выполнения цикла.', statement.line, statement.column);
         const result = executeBlock(statement.body, values, runtime, true);
         if (result?.returned) return finish(result);
         if (result?.broken) break;
@@ -1204,10 +1204,10 @@ function executeBlock(program, values, runtime, scoped) {
       }
     } else if (statement.kind === 'repeat') {
       const count = evaluate(statement.count, values, runtime);
-      if (count < 0) throw new FableError('Количество повторений не может быть отрицательным.', statement.line, statement.column);
+      if (count < 0) throw new XyzError('Количество повторений не может быть отрицательным.', statement.line, statement.column);
       for (let iteration = 0; iteration < count; iteration += 1) {
         runtime.steps += 1;
-        if (runtime.steps > runtime.maxSteps) throw new FableError('Превышен предел выполнения цикла.', statement.line, statement.column);
+        if (runtime.steps > runtime.maxSteps) throw new XyzError('Превышен предел выполнения цикла.', statement.line, statement.column);
         const result = executeBlock(statement.body, values, runtime, true);
         if (result?.returned) return finish(result);
         if (result?.broken) break;
@@ -1218,7 +1218,7 @@ function executeBlock(program, values, runtime, scoped) {
       const items = Array.isArray(collection) ? collection : Object.keys(collection);
       for (const item of items) {
         runtime.steps += 1;
-        if (runtime.steps > runtime.maxSteps) throw new FableError('Превышен предел выполнения цикла.', statement.line, statement.column);
+        if (runtime.steps > runtime.maxSteps) throw new XyzError('Превышен предел выполнения цикла.', statement.line, statement.column);
         values.set(statement.name, item);
         const result = executeBlock(statement.body, values, runtime, true);
         if (result?.returned) {
@@ -1278,7 +1278,7 @@ function bindDefinitionValues(functions, classes, values) {
 function executeModuleSource(source, filePath, runtime, useCache = true) {
   const cacheKey = filePath || '<main>';
   if (useCache && runtime.moduleCache.has(cacheKey)) return runtime.moduleCache.get(cacheKey);
-  if (runtime.loadingModules.has(cacheKey)) throw new FableError(`Циклический import: модуль «${filePath}» уже загружается.`, 1, 1);
+  if (runtime.loadingModules.has(cacheKey)) throw new XyzError(`Циклический import: модуль «${filePath}» уже загружается.`, 1, 1);
   runtime.loadingModules.add(cacheKey);
 
   const previousFunctions = runtime.functions;
@@ -1309,7 +1309,7 @@ function executeModuleSource(source, filePath, runtime, useCache = true) {
     if (useCache) runtime.moduleCache.set(cacheKey, namespace);
     return namespace;
   } catch (error) {
-    if (error instanceof FableError && !error.filePath) error.filePath = filePath;
+    if (error instanceof XyzError && !error.filePath) error.filePath = filePath;
     throw error;
   } finally {
     runtime.functions = previousFunctions;
@@ -1320,7 +1320,7 @@ function executeModuleSource(source, filePath, runtime, useCache = true) {
 }
 
 function loadImportedModule(name, runtime, statement) {
-  if (!runtime.loadModule) throw new FableError(`Модуль «${name}» нельзя загрузить: загрузчик модулей не настроен.`, statement.line, statement.column);
+  if (!runtime.loadModule) throw new XyzError(`Модуль «${name}» нельзя загрузить: загрузчик модулей не настроен.`, statement.line, statement.column);
   try {
     const loaded = runtime.loadModule(name, runtime.currentFile);
     if (loaded?.nativeExports && typeof loaded.nativeExports === 'object') {
@@ -1343,8 +1343,8 @@ function loadImportedModule(name, runtime, statement) {
     if (!loaded || typeof loaded.source !== 'string' || !loaded.filePath) throw new Error('Загрузчик не вернул файл модуля.');
     return executeModuleSource(loaded.source, loaded.filePath, runtime);
   } catch (error) {
-    if (error instanceof FableError) throw error;
-    const problem = new FableError(`Не удалось загрузить модуль «${name}»: ${error.message}`, statement.line, statement.column);
+    if (error instanceof XyzError) throw error;
+    const problem = new XyzError(`Не удалось загрузить модуль «${name}»: ${error.message}`, statement.line, statement.column);
     problem.filePath = runtime.currentFile;
     throw problem;
   }
@@ -1368,7 +1368,7 @@ function run(source, output = console.log, options = {}) {
 
 function validate(source) {
   try { check(parse(source)); return []; }
-  catch (error) { if (error instanceof FableError) return [error]; throw error; }
+  catch (error) { if (error instanceof XyzError) return [error]; throw error; }
 }
 
-module.exports = { FableError, parse, check, run, validate };
+module.exports = { XyzError, parse, check, run, validate };

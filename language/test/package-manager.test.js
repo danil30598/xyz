@@ -47,9 +47,9 @@ function storedZip(entries) {
 }
 
 async function main() {
-  const projectDir = fs.mkdtempSync(path.join(__dirname, '.tmp-fablescript-package-'));
+  const projectDir = fs.mkdtempSync(path.join(__dirname, '.tmp-xyz-package-'));
   try {
-    fs.writeFileSync(path.join(projectDir, 'fable.json'), '{"name":"package-test"}\n', 'utf8');
+    fs.writeFileSync(path.join(projectDir, 'xyz.json'), '{"name":"package-test"}\n', 'utf8');
     const source = 'func hello(string name) {\nreturn "Hello, " + name\n}\n';
     const sha256 = crypto.createHash('sha256').update(source, 'utf8').digest('hex');
     const windowArchive = storedZip({
@@ -62,7 +62,7 @@ async function main() {
       packages: {
         greetings: {
           latest: '1.0.0',
-          versions: { '1.0.0': { url: './greetings.fable', sha256 } },
+          versions: { '1.0.0': { url: './greetings.xyz', sha256 } },
         },
         window: {
           latest: '1.0.0',
@@ -83,7 +83,7 @@ async function main() {
     };
     const responses = new Map([
       ['https://example.test/index.json', { json: registry }],
-      ['https://example.test/greetings.fable', { text: source }],
+      ['https://example.test/greetings.xyz', { text: source }],
       ['https://example.test/window.zip', { buffer: windowArchive }],
     ]);
     const fetchImpl = async (url) => {
@@ -103,16 +103,16 @@ async function main() {
       fetchImpl,
     });
     assert.equal(installed.version, '1.0.0');
-    assert.equal(fs.readFileSync(path.join(projectDir, 'fable_modules', 'greetings.fable'), 'utf8'), source);
+    assert.equal(fs.readFileSync(path.join(projectDir, 'xyz_modules', 'greetings.xyz'), 'utf8'), source);
 
-    const mainPath = path.join(projectDir, 'main.fable');
+    const mainPath = path.join(projectDir, 'main.xyz');
     const output = [];
     run('import greetings\nprint(greetings.hello("Alex"))', (value) => output.push(value), {
       filePath: mainPath,
       loadModule: createModuleLoader(mainPath),
     });
     assert.deepEqual(output, ['Hello, Alex']);
-    const lock = JSON.parse(fs.readFileSync(path.join(projectDir, 'fable.lock.json'), 'utf8'));
+    const lock = JSON.parse(fs.readFileSync(path.join(projectDir, 'xyz.lock.json'), 'utf8'));
     assert.equal(lock.packages.greetings.sha256, sha256);
 
     const installedWindow = await installPackage('window', {
@@ -124,14 +124,14 @@ async function main() {
     });
     assert.equal(installedWindow.kind, 'native');
     assert.equal(fs.readFileSync(path.join(installedWindow.modulePath, 'window-host.py'), 'utf8'), '# host');
-    const nativeManifest = JSON.parse(fs.readFileSync(path.join(installedWindow.modulePath, 'fable-native.json'), 'utf8'));
+    const nativeManifest = JSON.parse(fs.readFileSync(path.join(installedWindow.modulePath, 'xyz-native.json'), 'utf8'));
     assert.equal(nativeManifest.python, 'python-win-x64/pythonw.exe');
     const loadedWindow = createModuleLoader(mainPath)('window', mainPath);
     assert.equal(loadedWindow.nativeExports.isOpen(), false);
 
-    const macProjectDir = fs.mkdtempSync(path.join(__dirname, '.tmp-fablescript-mac-package-'));
+    const macProjectDir = fs.mkdtempSync(path.join(__dirname, '.tmp-xyz-mac-package-'));
     try {
-      fs.writeFileSync(path.join(macProjectDir, 'fable.json'), '{"name":"mac-package-test"}\n', 'utf8');
+      fs.writeFileSync(path.join(macProjectDir, 'xyz.json'), '{"name":"mac-package-test"}\n', 'utf8');
       registry.packages.window.versions['1.0.0'].platforms['darwin-arm64'] = {
         url: './window.zip',
         sha256: windowSha256,
@@ -145,7 +145,7 @@ async function main() {
         arch: 'arm64',
       });
       assert.equal(installedMacWindow.kind, 'native');
-      assert.equal(JSON.parse(fs.readFileSync(path.join(installedMacWindow.modulePath, 'fable-native.json'), 'utf8')).platform, 'darwin-arm64');
+      assert.equal(JSON.parse(fs.readFileSync(path.join(installedMacWindow.modulePath, 'xyz-native.json'), 'utf8')).platform, 'darwin-arm64');
     } finally {
       fs.rmSync(macProjectDir, { recursive: true, force: true });
     }

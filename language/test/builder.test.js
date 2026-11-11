@@ -11,12 +11,12 @@ assert.throws(() => executableName('***'), /латинскую букву или
 assert.match(findNodeExecutable(), /node\.exe$/i);
 
 if (process.platform === 'win32') {
-  const projectDirectory = fs.mkdtempSync(path.join(__dirname, '.tmp-fablescript-build-'));
+  const projectDirectory = fs.mkdtempSync(path.join(__dirname, '.tmp-xyz-build-'));
   try {
-    fs.writeFileSync(path.join(projectDirectory, 'fable.json'), '{"name":"Portable Test"}\n', 'utf8');
-    fs.writeFileSync(path.join(projectDirectory, 'checker.fable'), 'func answer() {\n  return "EXECUTED"\n}\n', 'utf8');
-    fs.writeFileSync(path.join(projectDirectory, 'main.fable'), 'import file\nvar value = input("Value: ")\nfile.write("saved.txt", value)\nprint("PORTABLE_" + value)\nprint(execute("checker.fable", "answer"))\n', 'utf8');
-    const result = buildPortable(path.join(projectDirectory, 'main.fable'));
+    fs.writeFileSync(path.join(projectDirectory, 'xyz.json'), '{"name":"Portable Test"}\n', 'utf8');
+    fs.writeFileSync(path.join(projectDirectory, 'checker.xyz'), 'func answer() {\n  return "EXECUTED"\n}\n', 'utf8');
+    fs.writeFileSync(path.join(projectDirectory, 'main.xyz'), 'import file\nvar value = input("Value: ")\nfile.write("saved.txt", value)\nprint("PORTABLE_" + value)\nprint(execute("checker.xyz", "answer"))\n', 'utf8');
+    const result = buildPortable(path.join(projectDirectory, 'main.xyz'));
     assert.equal(path.basename(result.executablePath), 'Portable-Test.exe');
     assert.equal(path.basename(result.launcherPath), 'Portable-Test.cmd');
     assert.equal(fs.existsSync(path.join(result.outputDirectory, 'app', 'runtime', 'native-modules', 'file.js')), true);
@@ -28,7 +28,7 @@ if (process.platform === 'win32') {
     assert.match(execution.stdout, /PORTABLE_OK/);
     assert.match(execution.stdout, /EXECUTED/);
     assert.equal(fs.readFileSync(path.join(result.outputDirectory, 'app', 'project', 'saved.txt'), 'utf8'), 'OK');
-    const rebuilt = buildPortable(path.join(projectDirectory, 'main.fable'));
+    const rebuilt = buildPortable(path.join(projectDirectory, 'main.xyz'));
     assert.equal(rebuilt.executablePath, result.executablePath);
   } finally {
     fs.rmSync(projectDirectory, { recursive: true, force: true });

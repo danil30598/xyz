@@ -71,7 +71,7 @@ function findPythonw(options = {}) {
   const pythonRoot = path.join(environment.LOCALAPPDATA || '', 'Programs', 'Python');
   const candidates = [];
   if (options.pythonExecutable) candidates.push(options.pythonExecutable);
-  if (environment.FABLE_PYTHONW) candidates.push(environment.FABLE_PYTHONW);
+  if (environment.XYZ_PYTHONW) candidates.push(environment.XYZ_PYTHONW);
   if (environment.LOCALAPPDATA && exists(pythonRoot)) {
     for (const entry of readDirectory(pythonRoot)) {
       if (entry.isDirectory() && entry.name.startsWith('Python')) candidates.push(path.join(pythonRoot, entry.name, 'pythonw.exe'));
@@ -82,9 +82,9 @@ function findPythonw(options = {}) {
 
 function defaultOpenNative(scenePath, options = {}) {
   const hostPath = options.hostPath || path.join(__dirname, 'window-host.py');
-  if (!fs.existsSync(hostPath)) throw new Error('Не найден графический хост window-host.py. Переустановите FableScript.');
+  if (!fs.existsSync(hostPath)) throw new Error('Не найден графический хост window-host.py. Переустановите xyz.');
   const python = findPythonw({ pythonExecutable: options.pythonExecutable });
-  if (!python) throw new Error('Графический движок не найден. Выполните: fable install window');
+  if (!python) throw new Error('Графический движок не найден. Выполните: xyz install window');
   return spawn(python, [hostPath, scenePath], { stdio: 'ignore' });
 }
 
@@ -152,7 +152,7 @@ function createWindowModule(options = {}) {
   const fileExists = options.fileExists || fs.existsSync;
   const sleep = options.sleep || ((milliseconds) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds));
   const now = options.now || Date.now;
-  const scene = { width: 800, height: 600, title: 'FableScript', background: '#20242b', items: [], commands: [], closeRequested: false };
+  const scene = { width: 800, height: 600, title: 'xyz', background: '#20242b', items: [], commands: [], closeRequested: false };
   let scenePath = null;
   let statePath = null;
   let nativeChild = null;
@@ -243,7 +243,7 @@ function createWindowModule(options = {}) {
     show() {
       if (useNativeWindow) {
         if (scenePath && readState().open) return true;
-        scenePath = path.join(temporaryDirectory, `fablescript-window-${randomUUID()}.json`);
+        scenePath = path.join(temporaryDirectory, `xyz-window-${randomUUID()}.json`);
         statePath = `${scenePath}.state.json`;
         scene.closeRequested = false;
         writeScene();
@@ -253,7 +253,7 @@ function createWindowModule(options = {}) {
         lastDeltaTime = 0;
         return true;
       }
-      const filePath = path.join(temporaryDirectory, `fablescript-window-${randomUUID()}.html`);
+      const filePath = path.join(temporaryDirectory, `xyz-window-${randomUUID()}.html`);
       writeFile(filePath, htmlFor(scene));
       openExternal(filePath);
       return true;

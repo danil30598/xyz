@@ -16,13 +16,13 @@ const BUILTIN_MODULES = [
   { name: 'math', detail: 'Математические функции и константы', members: MATH_MEMBERS },
   { name: 'random', detail: 'Случайные числа и выбор элементов', members: RANDOM_MEMBERS },
   { name: 'time', detail: 'Время, паузы и измерение интервалов', members: TIME_MEMBERS },
-  { name: 'window', detail: 'Графика FableScript — установите: fable install window', members: WINDOW_MEMBERS },
+  { name: 'window', detail: 'Графика xyz — установите: xyz install window', members: WINDOW_MEMBERS },
 ];
 
 function findConfiguredProjectDir(startDirectory) {
   let directory = path.resolve(startDirectory);
   while (true) {
-    if (fs.existsSync(path.join(directory, 'fable.json'))) return directory;
+    if (fs.existsSync(path.join(directory, 'xyz.json'))) return directory;
     const parent = path.dirname(directory);
     if (parent === directory) return null;
     directory = parent;
@@ -30,10 +30,10 @@ function findConfiguredProjectDir(startDirectory) {
 }
 
 function globalModulesDir() {
-  const fableHome = process.env.FABLE_HOME
-    ? path.resolve(process.env.FABLE_HOME)
-    : path.join(os.homedir(), '.fable');
-  return path.join(fableHome, 'packages');
+  const xyzHome = process.env.XYZ_HOME
+    ? path.resolve(process.env.XYZ_HOME)
+    : path.join(os.homedir(), '.xyz');
+  return path.join(xyzHome, 'packages');
 }
 
 function findProjectDir(filePath) {
@@ -51,11 +51,11 @@ function containedPath(root, relativePath) {
 
 function findNativePackage(name, projectDir) {
   const candidates = [
-    path.join(projectDir, 'fable_modules', '.native', name),
+    path.join(projectDir, 'xyz_modules', '.native', name),
     path.join(globalModulesDir(), '.native', name),
   ];
   for (const packagePath of candidates) {
-    const manifestPath = path.join(packagePath, 'fable-native.json');
+    const manifestPath = path.join(packagePath, 'xyz-native.json');
     if (!fs.existsSync(manifestPath)) continue;
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     if (manifest.name !== name) throw new Error(`Неверный манифест нативного пакета «${name}».`);
@@ -87,7 +87,7 @@ function createModuleLoader(entryFilePath) {
     }
     if (name === 'window') {
       const installed = findNativePackage(name, projectDir);
-      if (!installed) throw new Error('Пакет window не установлен. Выполните: fable install window');
+      if (!installed) throw new Error('Пакет window не установлен. Выполните: xyz install window');
       return {
         filePath: installed.hostPath,
         nativeExports: createWindowModule({
@@ -98,15 +98,15 @@ function createModuleLoader(entryFilePath) {
         nativeMembers: WINDOW_MEMBERS,
       };
     }
-    const moduleFileName = name.toLowerCase().endsWith('.fable') ? name : `${name}.fable`;
+    const moduleFileName = name.toLowerCase().endsWith('.xyz') ? name : `${name}.xyz`;
     const candidates = [
       path.resolve(path.dirname(importerPath), moduleFileName),
-      path.resolve(projectDir, 'fable_modules', moduleFileName),
+      path.resolve(projectDir, 'xyz_modules', moduleFileName),
       path.resolve(globalModulesDir(), moduleFileName),
     ];
     const modulePath = candidates.find((candidate) => fs.existsSync(candidate));
     if (!modulePath) {
-      throw new Error(`файл ${moduleFileName} не найден рядом с программой, в fable_modules или среди глобальных пакетов`);
+      throw new Error(`файл ${moduleFileName} не найден рядом с программой, в xyz_modules или среди глобальных пакетов`);
     }
     return { source: fs.readFileSync(modulePath, 'utf8'), filePath: modulePath };
   };

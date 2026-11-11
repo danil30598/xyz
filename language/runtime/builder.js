@@ -5,9 +5,9 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { findConfiguredProjectDir } = require('./module-loader');
 
-const BUILD_MARKER = '.fablescript-build.json';
+const BUILD_MARKER = '.xyz-build.json';
 const SKIPPED_SOURCE_DIRECTORIES = new Set([
-  '.git', '.github-publish', 'build', 'dist', 'node_modules', 'fable_modules',
+  '.git', '.github-publish', 'build', 'dist', 'node_modules', 'xyz_modules',
   'runtime', 'test', 'tools', 'vscode-extension', 'packaging', 'registry',
 ]);
 
@@ -24,15 +24,15 @@ function validNode(candidate) {
 }
 
 function findNodeExecutable(preferred) {
-  const candidates = [preferred, process.env.FABLE_NODE_EXE];
+  const candidates = [preferred, process.env.XYZ_NODE_EXE];
   if (path.basename(process.execPath).toLowerCase() === 'node.exe') candidates.push(process.execPath);
   const discovered = spawnSync('where.exe', ['node'], { encoding: 'utf8', windowsHide: true });
   if (discovered.status === 0) candidates.push(...String(discovered.stdout).split(/\r?\n/).filter(Boolean));
   for (const candidate of candidates) if (validNode(candidate)) return path.resolve(candidate);
-  throw new Error('Для сборки нужен node.exe. Установите Node.js или задайте путь через FABLE_NODE_EXE. Получателю программы Node.js не понадобится.');
+  throw new Error('Для сборки нужен node.exe. Установите Node.js или задайте путь через XYZ_NODE_EXE. Получателю программы Node.js не понадобится.');
 }
 
-function copyFableSources(sourceDirectory, destinationDirectory, excludedPath) {
+function copyXyzSources(sourceDirectory, destinationDirectory, excludedPath) {
   const walk = (current, relative) => {
     for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
       const source = path.join(current, entry.name);
@@ -41,7 +41,7 @@ function copyFableSources(sourceDirectory, destinationDirectory, excludedPath) {
       if (entry.isDirectory()) {
         if (SKIPPED_SOURCE_DIRECTORIES.has(entry.name)) continue;
         walk(source, nextRelative);
-      } else if (entry.isFile() && path.extname(entry.name).toLowerCase() === '.fable') {
+      } else if (entry.isFile() && path.extname(entry.name).toLowerCase() === '.xyz') {
         const destination = path.join(destinationDirectory, nextRelative);
         fs.mkdirSync(path.dirname(destination), { recursive: true });
         fs.copyFileSync(source, destination);
@@ -59,9 +59,9 @@ function prepareOutput(outputDirectory) {
     return;
   }
   const markerPath = path.join(outputDirectory, BUILD_MARKER);
-  if (!fs.existsSync(markerPath)) throw new Error(`Папка сборки не пуста и не принадлежит FableScript: ${outputDirectory}`);
+  if (!fs.existsSync(markerPath)) throw new Error(`Папка сборки не пуста и не принадлежит xyz: ${outputDirectory}`);
   const marker = JSON.parse(fs.readFileSync(markerPath, 'utf8'));
-  if (marker.kind !== 'fablescript-portable-build') throw new Error(`Неверный маркер папки сборки: ${outputDirectory}`);
+  if (marker.kind !== 'xyz-portable-build') throw new Error(`Неверный маркер папки сборки: ${outputDirectory}`);
   fs.rmSync(outputDirectory, { recursive: true, force: true });
 }
 
@@ -80,11 +80,11 @@ function renameWithRetry(source, destination) {
 function buildPortable(entryFilePath, options = {}) {
   if (process.platform !== 'win32') throw new Error('Сборка .exe пока поддерживается только на Windows.');
   const entryPath = path.resolve(entryFilePath);
-  if (path.extname(entryPath).toLowerCase() !== '.fable' || !fs.existsSync(entryPath)) throw new Error(`Не найден входной файл .fable: ${entryPath}`);
+  if (path.extname(entryPath).toLowerCase() !== '.xyz' || !fs.existsSync(entryPath)) throw new Error(`Не найден входной файл .xyz: ${entryPath}`);
   const projectDirectory = findConfiguredProjectDir(path.dirname(entryPath)) || path.dirname(entryPath);
-  const configPath = path.join(projectDirectory, 'fable.json');
+  const configPath = path.join(projectDirectory, 'xyz.json');
   const config = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
-  const name = executableName(options.name || config.name || path.basename(entryPath, '.fable'));
+  const name = executableName(options.name || config.name || path.basename(entryPath, '.xyz'));
   const outputDirectory = path.resolve(options.outputDirectory || path.join(projectDirectory, 'dist', name));
   const projectRoot = path.resolve(projectDirectory);
   if (outputDirectory === projectRoot || path.dirname(outputDirectory) === outputDirectory) throw new Error('Папка сборки не может совпадать с корнем проекта или диска.');
@@ -99,13 +99,13 @@ function buildPortable(entryFilePath, options = {}) {
     fs.mkdirSync(bundledProject, { recursive: true });
     fs.mkdirSync(bundledRuntime, { recursive: true });
 
-    copyFableSources(projectRoot, bundledProject, outputDirectory);
-    for (const name of ['fable.json', 'fable.lock.json']) {
+    copyXyzSources(projectRoot, bundledProject, outputDirectory);
+    for (const name of ['xyz.json', 'xyz.lock.json']) {
       const source = path.join(projectRoot, name);
       if (fs.existsSync(source)) fs.copyFileSync(source, path.join(bundledProject, name));
     }
-    const modulesSource = path.join(projectRoot, 'fable_modules');
-    if (fs.existsSync(modulesSource)) fs.cpSync(modulesSource, path.join(bundledProject, 'fable_modules'), { recursive: true });
+    const modulesSource = path.join(projectRoot, 'xyz_modules');
+    if (fs.existsSync(modulesSource)) fs.cpSync(modulesSource, path.join(bundledProject, 'xyz_modules'), { recursive: true });
 
     for (const runtimeFile of ['engine.js', 'module-loader.js', 'console-input.js']) {
       fs.copyFileSync(path.join(__dirname, runtimeFile), path.join(bundledRuntime, runtimeFile));
@@ -115,13 +115,13 @@ function buildPortable(entryFilePath, options = {}) {
     fs.copyFileSync(nodeExecutable, executablePath);
 
     const entryRelative = path.relative(projectRoot, entryPath);
-    const runnerSource = `'use strict';\nconst fs = require('node:fs');\nconst path = require('node:path');\nconst { FableError, run } = require('./runtime/engine');\nconst { createModuleLoader } = require('./runtime/module-loader');\nconst { readConsoleInput } = require('./runtime/console-input');\nconst filePath = path.join(__dirname, 'project', ${JSON.stringify(entryRelative)});\ntry {\n  const source = fs.readFileSync(filePath, 'utf8');\n  run(source, console.log, { filePath, loadModule: createModuleLoader(filePath), input: readConsoleInput });\n} catch (error) {\n  if (error instanceof FableError) {\n    console.error(\`${'${error.filePath || filePath}'}:${'${error.line}'}:${'${error.column}'}: ${'${error.message}'}\`);\n    process.exitCode = 1;\n  } else {\n    console.error(\`FableScript: ${'${error.message}'}\`);\n    process.exitCode = 1;\n  }\n}\n`;
+    const runnerSource = `'use strict';\nconst fs = require('node:fs');\nconst path = require('node:path');\nconst { XyzError, run } = require('./runtime/engine');\nconst { createModuleLoader } = require('./runtime/module-loader');\nconst { readConsoleInput } = require('./runtime/console-input');\nconst filePath = path.join(__dirname, 'project', ${JSON.stringify(entryRelative)});\ntry {\n  const source = fs.readFileSync(filePath, 'utf8');\n  run(source, console.log, { filePath, loadModule: createModuleLoader(filePath), input: readConsoleInput });\n} catch (error) {\n  if (error instanceof XyzError) {\n    console.error(\`${'${error.filePath || filePath}'}:${'${error.line}'}:${'${error.column}'}: ${'${error.message}'}\`);\n    process.exitCode = 1;\n  } else {\n    console.error(\`xyz: ${'${error.message}'}\`);\n    process.exitCode = 1;\n  }\n}\n`;
     fs.writeFileSync(path.join(appDirectory, 'runner.js'), runnerSource, 'utf8');
     const launcherPath = path.join(stagingDirectory, `${name}.cmd`);
     const launcherSource = `@echo off\r\nchcp 65001 >nul\r\n"%~dp0${name}.exe" "%~dp0app\\runner.js" %*\r\nif errorlevel 1 pause\r\n`;
     fs.writeFileSync(launcherPath, launcherSource, 'ascii');
     fs.writeFileSync(path.join(stagingDirectory, 'КАК ЗАПУСТИТЬ.txt'), `Запустите файл ${name}.cmd.\r\n\r\n${name}.exe — это встроенный Node.js, его не нужно устанавливать отдельно.\r\nПередавайте всю папку целиком.\r\n`, 'utf8');
-    fs.writeFileSync(path.join(stagingDirectory, BUILD_MARKER), `${JSON.stringify({ kind: 'fablescript-portable-build', name, entry: entryRelative }, null, 2)}\n`, 'utf8');
+    fs.writeFileSync(path.join(stagingDirectory, BUILD_MARKER), `${JSON.stringify({ kind: 'xyz-portable-build', name, entry: entryRelative }, null, 2)}\n`, 'utf8');
     fs.mkdirSync(path.dirname(outputDirectory), { recursive: true });
     renameWithRetry(stagingDirectory, outputDirectory);
     return {

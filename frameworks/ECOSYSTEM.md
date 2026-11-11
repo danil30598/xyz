@@ -1,6 +1,6 @@
-# Экосистема FableScript
+# Экосистема xyz
 
-Здесь перечислены существующие публичные пакеты и фреймворки FableScript. Реестр пока молодой, поэтому список закономерно не поражает воображение.
+Здесь перечислены существующие публичные пакеты и фреймворки xyz. Реестр пока молодой, поэтому список закономерно не поражает воображение.
 
 ## Фреймворки
 
@@ -14,11 +14,11 @@
 | `json` | Разбор и создание JSON | Входит в язык |
 | `math` | Математические функции и константы | Входит в язык |
 | `random` | Случайные числа, выбор элементов и вероятности | Входит в язык |
-| `window` | Графическое окно, фигуры, изображения, звук и ввод | `fable install window` |
+| `window` | Графическое окно, фигуры, изображения, звук и ввод | `xyz install window` |
 
 ### file
 
-```fable
+```xyz
 import file
 
 file.write("save.txt", "score=10")
@@ -27,7 +27,7 @@ print(file.read("save.txt"))
 
 Защищённая запись RANS#M1 использует AES-256-GCM и пароль:
 
-```fable
+```xyz
 file.write("save.json", "secret", "rans#m", "strong-password")
 print(file.read("save.json", "rans#m", "strong-password"))
 ```
@@ -36,7 +36,7 @@ print(file.read("save.json", "rans#m", "strong-password"))
 
 ### json
 
-```fable
+```xyz
 import json
 
 string text = json.stringify({name: "Alex", score: 10})
@@ -48,7 +48,7 @@ print(data.name)
 
 ### math
 
-```fable
+```xyz
 import math
 
 print(math.sqrt(81))
@@ -59,7 +59,7 @@ print(math.PI)
 
 ### random
 
-```fable
+```xyz
 import random
 
 print(random.int(1, 6))
@@ -72,10 +72,10 @@ print(random.int(1, 6))
 Установка:
 
 ```powershell
-fable install window
+xyz install window
 ```
 
-```fable
+```xyz
 import window
 
 window.create(800, 520, "Моё окно")
@@ -93,11 +93,11 @@ window.show()
 
 | Пакет | Версия | Назначение | Установка |
 | --- | --- | --- | --- |
-| `greetings` | `1.0.0` | Пример пакета с функцией приветствия | `fable install greetings` |
+| `greetings` | `1.0.0` | Пример пакета с функцией приветствия | `xyz install greetings` |
 
 ### greetings
 
-```fable
+```xyz
 import greetings
 
 print(greetings.hello("Alex"))

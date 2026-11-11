@@ -29,9 +29,9 @@ async function main() {
   const windowsArchive = readPlatformArchive('win32-x64');
   const macArchive = readPlatformArchive('darwin-arm64');
 
-  const projectDir = fs.mkdtempSync(path.join(__dirname, '.tmp-fablescript-window-package-'));
+  const projectDir = fs.mkdtempSync(path.join(__dirname, '.tmp-xyz-window-package-'));
   try {
-    fs.writeFileSync(path.join(projectDir, 'fable.json'), '{"name":"window-package-test"}\n', 'utf8');
+    fs.writeFileSync(path.join(projectDir, 'xyz.json'), '{"name":"window-package-test"}\n', 'utf8');
     const fetchImpl = async (url) => ({
       ok: true,
       status: 200,
@@ -53,9 +53,9 @@ async function main() {
     fs.rmSync(projectDir, { recursive: true, force: true });
   }
 
-  const macProjectDir = fs.mkdtempSync(path.join(__dirname, '.tmp-fablescript-window-mac-package-'));
+  const macProjectDir = fs.mkdtempSync(path.join(__dirname, '.tmp-xyz-window-mac-package-'));
   try {
-    fs.writeFileSync(path.join(macProjectDir, 'fable.json'), '{"name":"window-mac-package-test"}\n', 'utf8');
+    fs.writeFileSync(path.join(macProjectDir, 'xyz.json'), '{"name":"window-mac-package-test"}\n', 'utf8');
     const fetchImpl = async () => ({
       ok: true,
       status: 200,

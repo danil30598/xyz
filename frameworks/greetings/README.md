@@ -1,8 +1,8 @@
 # greetings
 
-Первый демонстрационный пакет FableScript. Экспортирует функцию `hello(string name)`.
+Первый демонстрационный пакет xyz. Экспортирует функцию `hello(string name)`.
 
-```fable
+```xyz
 import greetings
 
 print(greetings.hello("Alex"))
@@ -11,5 +11,5 @@ print(greetings.hello("Alex"))
 Установка:
 
 ```powershell
-fable install greetings
+xyz install greetings
 ```

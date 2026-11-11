@@ -7,14 +7,14 @@ const zlib = require('node:zlib');
 const { parse, check } = require('./engine');
 
 const PACKAGE_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
-const DEFAULT_REGISTRY_URL = 'https://raw.githubusercontent.com/danil30598/fablescript-registry/main/frameworks/index.json';
+const DEFAULT_REGISTRY_URL = 'https://raw.githubusercontent.com/danil30598/xyz/main/frameworks/index.json';
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
 function readProjectConfig(projectDir) {
-  const filePath = path.join(projectDir, 'fable.json');
+  const filePath = path.join(projectDir, 'xyz.json');
   return fs.existsSync(filePath) ? readJson(filePath) : {};
 }
 
@@ -115,7 +115,7 @@ function writeJsonAtomic(filePath, value) {
 async function installPackage(specification, options = {}) {
   const projectDir = path.resolve(options.projectDir || process.cwd());
   const config = readProjectConfig(projectDir);
-  const registryUrl = options.registryUrl || config.registry || process.env.FABLE_REGISTRY_URL || DEFAULT_REGISTRY_URL;
+  const registryUrl = options.registryUrl || config.registry || process.env.XYZ_REGISTRY_URL || DEFAULT_REGISTRY_URL;
 
   const { name, requestedVersion } = packageRequest(specification);
   const fetchImpl = options.fetchImpl || globalThis.fetch;
@@ -128,8 +128,8 @@ async function installPackage(specification, options = {}) {
   const release = packageRecord.versions?.[version];
   if (!release) throw new Error(`Версия «${version}» пакета «${name}» не найдена.`);
 
-  const modulesDir = path.resolve(options.modulesDir || path.join(projectDir, 'fable_modules'));
-  const lockPath = path.resolve(options.lockPath || path.join(projectDir, 'fable.lock.json'));
+  const modulesDir = path.resolve(options.modulesDir || path.join(projectDir, 'xyz_modules'));
+  const lockPath = path.resolve(options.lockPath || path.join(projectDir, 'xyz.lock.json'));
   fs.mkdirSync(modulesDir, { recursive: true });
 
   if (release.kind === 'native') {
@@ -156,7 +156,7 @@ async function installPackage(specification, options = {}) {
       const pythonPath = safeArchivePath(temporaryPath, platformRelease.entry.python);
       if (!fs.existsSync(hostPath) || !fs.existsSync(pythonPath)) throw new Error(`Архив пакета «${name}» не содержит графический движок.`);
       if ((options.platform || process.platform) !== 'win32') fs.chmodSync(pythonPath, 0o755);
-      writeJsonAtomic(path.join(temporaryPath, 'fable-native.json'), {
+      writeJsonAtomic(path.join(temporaryPath, 'xyz-native.json'), {
         name,
         version,
         platform: platformKey,
@@ -189,7 +189,7 @@ async function installPackage(specification, options = {}) {
   }
   check(parse(source));
 
-  const modulePath = path.join(modulesDir, `${name}.fable`);
+  const modulePath = path.join(modulesDir, `${name}.xyz`);
   fs.writeFileSync(modulePath, source, 'utf8');
 
   fs.mkdirSync(path.dirname(lockPath), { recursive: true });

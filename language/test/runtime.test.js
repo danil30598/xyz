@@ -47,9 +47,9 @@ assert.equal(undeclaredErrors.length, 1);
 assert.match(undeclaredErrors[0].message, /не объявлена/);
 
 const explicitOutput = [];
-run('float value = 2\nstring text = "Fa" + "ble"\nbool ready = true\nprint(value)\nprint(text)\nprint(ready)',
+run('float value = 2\nstring text = "x" + "yz"\nbool ready = true\nprint(value)\nprint(text)\nprint(ready)',
   (value) => explicitOutput.push(value));
-assert.deepEqual(explicitOutput, ['2', 'Fable', 'true']);
+assert.deepEqual(explicitOutput, ['2', 'xyz', 'true']);
 
 const conditionOutput = [];
 run(`
@@ -121,10 +121,10 @@ run(`
   {
     print("Hello, " + name)
   }
-  greet("Fable")
+  greet("Xyz")
   print(add(2 3))
 `, (value) => functionOutput.push(value));
-assert.deepEqual(functionOutput, ['Hello, Fable', '5']);
+assert.deepEqual(functionOutput, ['Hello, Xyz', '5']);
 
 const recursiveOutput = [];
 run(`
@@ -337,7 +337,7 @@ run(`
 assert.deepEqual(typedClassOutput, ['7']);
 
 const moduleFiles = new Map([
-  ['C:\\project\\math.fable', `
+  ['C:\\project\\math.xyz', `
     var PI = 3.14
     func double(int value) {
       return value * 2
@@ -354,10 +354,10 @@ run(`
   print(math.PI)
   print(math.addAndDouble(2, 3))
 `, (value) => moduleOutput.push(value), {
-  filePath: 'C:\\project\\main.fable',
+  filePath: 'C:\\project\\main.xyz',
   loadModule(name) {
     moduleLoads += 1;
-    const filePath = `C:\\project\\${name}.fable`;
+    const filePath = `C:\\project\\${name}.xyz`;
     return { source: moduleFiles.get(filePath), filePath };
   },
 });
@@ -365,7 +365,7 @@ assert.deepEqual(moduleOutput, ['3.14', '10']);
 assert.equal(moduleLoads, 1);
 
 const executableFiles = new Map([
-  ['C:\\project\\IDchecker.fable', `
+  ['C:\\project\\IDchecker.xyz', `
     print("checker loaded")
     func check(string id) {
       return id == "FS-42"
@@ -374,10 +374,10 @@ const executableFiles = new Map([
 ]);
 const executeOutput = [];
 run(`
-  execute("IDchecker.fable")
-  print(execute("IDchecker.fable", "check", ["FS-42"]))
+  execute("IDchecker.xyz")
+  print(execute("IDchecker.xyz", "check", ["FS-42"]))
 `, (value) => executeOutput.push(value), {
-  filePath: 'C:\\project\\main.fable',
+  filePath: 'C:\\project\\main.xyz',
   loadModule(name) {
     const filePath = `C:\\project\\${name}`;
     if (!executableFiles.has(filePath)) throw new Error('файл не найден');
@@ -387,16 +387,16 @@ run(`
 assert.deepEqual(executeOutput, ['checker loaded', 'checker loaded', 'true']);
 assert.match(validate('execute()')[0].message, /от одного до трёх/);
 assert.match(validate('execute(123)')[0].message, /тип string/);
-assert.match(validate('execute("code.fable", "run", 123)')[0].message, /передать списком/);
-assert.throws(() => run('execute("IDchecker.fable", "missing")', () => {}, {
-  filePath: 'C:\\project\\main.fable',
+assert.match(validate('execute("code.xyz", "run", 123)')[0].message, /передать списком/);
+assert.throws(() => run('execute("IDchecker.xyz", "missing")', () => {}, {
+  filePath: 'C:\\project\\main.xyz',
   loadModule(name) {
     const filePath = `C:\\project\\${name}`;
     return { source: executableFiles.get(filePath), filePath };
   },
 }), /нет экспортируемой функции/);
-assert.throws(() => run('execute("IDchecker.fable", "check", [123])', () => {}, {
-  filePath: 'C:\\project\\main.fable',
+assert.throws(() => run('execute("IDchecker.xyz", "check", [123])', () => {}, {
+  filePath: 'C:\\project\\main.xyz',
   loadModule(name) {
     const filePath = `C:\\project\\${name}`;
     return { source: executableFiles.get(filePath), filePath };
@@ -405,21 +405,21 @@ assert.throws(() => run('execute("IDchecker.fable", "check", [123])', () => {}, 
 
 assert.throws(
   () => run('import missing', () => {}, {
-    filePath: 'C:\\project\\main.fable',
+    filePath: 'C:\\project\\main.xyz',
     loadModule() { throw new Error('файл не найден'); },
   }),
   /Не удалось загрузить модуль «missing»/,
 );
 
 const cyclicFiles = new Map([
-  ['C:\\project\\a.fable', 'import b'],
-  ['C:\\project\\b.fable', 'import a'],
+  ['C:\\project\\a.xyz', 'import b'],
+  ['C:\\project\\b.xyz', 'import a'],
 ]);
 assert.throws(
   () => run('import a', () => {}, {
-    filePath: 'C:\\project\\main.fable',
+    filePath: 'C:\\project\\main.xyz',
     loadModule(name) {
-      const filePath = `C:\\project\\${name}.fable`;
+      const filePath = `C:\\project\\${name}.xyz`;
       return { source: cyclicFiles.get(filePath), filePath };
     },
   }),
@@ -433,7 +433,7 @@ run(`
   window.background("navy")
   window.show()
 `, () => {}, {
-  filePath: 'C:\\project\\graphics.fable',
+  filePath: 'C:\\project\\graphics.xyz',
   loadModule(name) {
     assert.equal(name, 'window');
     return {
@@ -532,7 +532,7 @@ run(`
     print(error)
   }
 `, (value) => caughtModuleOutput.push(value), {
-  filePath: 'C:\\project\\main.fable',
+  filePath: 'C:\\project\\main.xyz',
   loadModule() { throw new Error('файл не найден'); },
 });
 assert.match(caughtModuleOutput[0], /Не удалось загрузить модуль «missing»/);
@@ -556,7 +556,7 @@ assert.match(catchScopeErrors[0].message, /не объявлена/);
 
 const collectionMethodsOutput = [];
 run(`
-  string title = "Fable Script"
+  string title = "xyz Script"
   print(title.len)
   print(title.upper())
   print(title.lower())
@@ -578,7 +578,7 @@ run(`
   print(player.contains("score"))
 `, (value) => collectionMethodsOutput.push(value));
 assert.deepEqual(collectionMethodsOutput, [
-  '12', 'FABLE SCRIPT', 'fable script', 'true', 'FableScript', '["Fable","Script"]',
+  '10', 'XYZ SCRIPT', 'xyz script', 'true', 'xyzScript', '["xyz","Script"]',
   'true', 'true', '[1,1.5,"two"]', '0', '["name","score"]', '["Alex",10]', 'true',
 ]);
 

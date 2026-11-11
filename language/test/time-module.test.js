@@ -23,7 +23,7 @@ test('time module reports seconds and measures deltas', () => {
   assert.throws(() => time.sleep(-1), /неотрицательным/);
 });
 
-test('time is available as a built-in FableScript module', () => {
+test('time is available as a built-in xyz module', () => {
   const output = [];
   const filePath = __filename;
   run('import time\nprint(time.now() > 0)', (value) => output.push(value), {

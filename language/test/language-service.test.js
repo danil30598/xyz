@@ -5,7 +5,7 @@ const test = require('node:test');
 const { collectSymbols, hoverText, identifierOccurrences, receiverType } = require('../vscode-extension/language-service');
 
 test('collects declarations and infers common variable types', () => {
-  const source = 'var title = "Fable"\nvar values = [1, 2]\nvar data = {a: 1}\nfunc sum(int a int b) -> int {\n}\nclass Player\n{\n}\n';
+  const source = 'var title = "Xyz"\nvar values = [1, 2]\nvar data = {a: 1}\nfunc sum(int a int b) -> int {\n}\nclass Player\n{\n}\n';
   const symbols = collectSymbols(source);
   assert.equal(receiverType(source, 'title'), 'string');
   assert.equal(receiverType(source, 'values'), 'list');

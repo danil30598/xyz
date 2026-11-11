@@ -18,12 +18,12 @@ $pygameArchive = Join-Path $dependencyRoot $pygameArchiveName
 $hostPath = Join-Path $projectRoot 'runtime\native-modules\window-host.py'
 $noticesPath = Join-Path $projectRoot 'runtime\vendor\THIRD_PARTY_NOTICES.md'
 $archivePath = Join-Path $buildRoot "window-runtime-$packageVersion-darwin-arm64.zip"
-$temporaryRoot = Join-Path ([System.IO.Path]::GetTempPath()) 'fablescript-window-macos-build'
+$temporaryRoot = Join-Path ([System.IO.Path]::GetTempPath()) 'xyz-window-macos-build'
 $resolvedTempBase = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd([System.IO.Path]::DirectorySeparatorChar)
 $resolvedTemporaryRoot = [System.IO.Path]::GetFullPath($temporaryRoot)
 
 if (-not $resolvedTemporaryRoot.StartsWith($resolvedTempBase + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase) -or
-    (Split-Path $resolvedTemporaryRoot -Leaf) -ne 'fablescript-window-macos-build') {
+    (Split-Path $resolvedTemporaryRoot -Leaf) -ne 'xyz-window-macos-build') {
     throw "Unsafe temporary path: $resolvedTemporaryRoot"
 }
 

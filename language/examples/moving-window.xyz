@@ -3,7 +3,7 @@ import window
 var x = 100
 var y = 180
 
-window.create(800, 520, "FableScript Game Loop")
+window.create(800, 520, "xyz Game Loop")
 window.show()
 
 while window.isOpen() {

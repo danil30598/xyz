@@ -27,7 +27,7 @@ assert.throws(() => predictable.choice([]), /непустой список/);
 assert.throws(() => predictable.chance(2), /от 0 до 1/);
 
 const output = [];
-const entryPath = path.join(__dirname, 'random-example.fable');
+const entryPath = path.join(__dirname, 'random-example.xyz');
 run(`
   import random
   random.seed(42)

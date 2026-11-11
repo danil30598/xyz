@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$installRoot = Join-Path $env:LOCALAPPDATA 'FableScript'
+$installRoot = Join-Path $env:LOCALAPPDATA 'xyz'
 $runtimeTarget = Join-Path $installRoot 'runtime'
 $binTarget = Join-Path $installRoot 'bin'
 
@@ -23,7 +23,7 @@ $codeCandidates = @(
 )
 $codePath = $codeCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
 if (-not $codePath) {
-    throw 'VS Code was not found. It is required to run FableScript CLI without a separate Node.js installation.'
+    throw 'VS Code was not found. It is required to run xyz CLI without a separate Node.js installation.'
 }
 
 New-Item -ItemType Directory -Path $runtimeTarget -Force | Out-Null
@@ -38,7 +38,7 @@ Copy-Item -LiteralPath (Join-Path $projectRoot 'runtime\console-input.js') -Dest
 Copy-Item -LiteralPath (Join-Path $projectRoot 'runtime\native-modules') -Destination $runtimeTarget -Recurse -Force
 Remove-Item -LiteralPath (Join-Path $runtimeTarget 'native-modules\window-host.py') -Force -ErrorAction SilentlyContinue
 
-$launcherPath = Join-Path $binTarget 'fable.cmd'
+$launcherPath = Join-Path $binTarget 'xyz.cmd'
 $primaryLauncher = @"
 @echo off
 chcp 65001 >nul
@@ -49,7 +49,7 @@ Set-Content -LiteralPath $launcherPath -Value $primaryLauncher -Encoding Ascii
 
 $windowsApps = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps'
 if (Test-Path -LiteralPath $windowsApps) {
-    $windowsRuntime = Join-Path $windowsApps 'FableScriptRuntime'
+    $windowsRuntime = Join-Path $windowsApps 'xyzRuntime'
     New-Item -ItemType Directory -Path $windowsRuntime -Force | Out-Null
     Remove-LegacyVendor $windowsRuntime
     Copy-Item -LiteralPath (Join-Path $projectRoot 'runtime\engine.js') -Destination $windowsRuntime -Force
@@ -66,7 +66,7 @@ chcp 65001 >nul
 set "ELECTRON_RUN_AS_NODE=1"
 "$codePath" "$windowsRuntime\cli.js" %*
 "@
-    Set-Content -LiteralPath (Join-Path $windowsApps 'fable.cmd') -Value $windowsLauncher -Encoding Ascii
+    Set-Content -LiteralPath (Join-Path $windowsApps 'xyz.cmd') -Value $windowsLauncher -Encoding Ascii
 }
 
 $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
@@ -76,5 +76,5 @@ if (-not ($entries | Where-Object { $_.TrimEnd('\') -ieq $binTarget.TrimEnd('\')
     [Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
 }
 
-Write-Output "FableScript CLI installed: $launcherPath"
-Write-Output 'Run: fable install greetings'
+Write-Output "xyz CLI installed: $launcherPath"
+Write-Output 'Run: xyz install greetings'

@@ -17,6 +17,6 @@ func factorial(int number) -> int
     return number * factorial(number - 1)
 }
 
-greet("FableScript")
+greet("xyz")
 print(add(2 3))
 print(factorial(5))
